@@ -1,0 +1,16 @@
+.DS_Store
+._*
+
+.gradle/
+gradle/
+build/
+
+gradlew
+gradlew.bat
+gradle/
+
+.zed/
+.idea/
+
+*.log
+*.temp
