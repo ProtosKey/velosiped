@@ -1,5 +1,5 @@
-#ifndef VLH_WRITER_H
-#define VLH_WRITER_H
+#ifndef VLS_WRITER_H
+#define VLS_WRITER_H
 
 #include <stddef.h>
 
