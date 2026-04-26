@@ -1,17 +1,11 @@
 .DS_Store
 ._*
 
-.gradle/
-gradle/
-build/
-
-gradlew
-gradlew.bat
-gradle/
-
 .cache
 .zed/
 .idea/
 
 *.log
 *.temp
+
+CLAUDE.md
