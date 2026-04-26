@@ -1,3 +1,6 @@
+#ifndef VLS_TYPES_H
+#define VLS_TYPES_H
+
 #include <time.h>
 
 typedef struct {
@@ -24,3 +27,5 @@ typedef struct commit_node {
   time_t created_time;
   const char *msg;
 } commit_t;
+
+#endif
