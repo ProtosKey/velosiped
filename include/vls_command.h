@@ -1,5 +1,6 @@
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
+#include <time.h>
 
 #include "utils/md-hasher.h"
 
@@ -14,6 +15,15 @@ typedef struct {
   const char *path;
   const char *name;
 } object_t;
+
+typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED } file_status;
+
+typedef struct commit_node {
+  struct commit_node *parent;
+  struct commit_node *child;
+  time_t created_time;
+  const char *msg;
+} commit_t;
 
 int vls_init_func(const int, const char **);
 int vls_add_func(const int, const char **);

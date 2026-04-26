@@ -13,6 +13,7 @@ add_executable(vls
     src/commands/init.c
     src/commands/commit.c
     src/commands/reset.c
+    src/commands/commit.c
 )
 
 target_include_directories(vls PRIVATE include)
