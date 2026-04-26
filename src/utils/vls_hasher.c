@@ -1,5 +1,6 @@
-#include "utils/md-hasher.h"
-#include "utils/vls_writer.h"
+#include "utils/input_output.h"
+#include "utils/md_hasher.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <openssl/evp.h>
 #include <stdbool.h>
@@ -10,17 +11,16 @@
 
 int hash_my_path(const char *path, vls_md_hash_t *result) {
   int fd = 0;
-  const char *no_sush_file = "No such file";
   if ((fd = open(path, O_RDONLY)) < 0) {
-    vls_safety_write(
-        (vls_output_t){STDERR_FILENO, no_sush_file, strlen(no_sush_file)});
+    const char *msg = strerror(errno);
+    vls_safety_write((vls_output_t){STDERR_FILENO, msg, strlen(msg)});
     return -1;
   }
 
   struct stat file;
   if (stat(path, &file) < 0) {
-    vls_safety_write(
-        (vls_output_t){STDERR_FILENO, no_sush_file, strlen(no_sush_file)});
+    const char *msg = strerror(errno);
+    vls_safety_write((vls_output_t){STDERR_FILENO, msg, strlen(msg)});
     return -1;
   }
 
@@ -75,7 +75,7 @@ hash_error:
   return -1;
 }
 
-int vls_hash_to_string(const vls_md_hash_t *hash, char *result) {
+int hash_to_string(const vls_md_hash_t *hash, char *result) {
   static const char *hex = "0123456789abcdef";
 
   for (int i = 0; i < MD_SIZE; i++) {

@@ -1,4 +1,4 @@
-#include "utils/vls_writer.h"
+#include "utils/input_output.h"
 #include "vls_command.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -7,13 +7,7 @@
 #include <unistd.h>
 
 int vls_init_func(const int, const char **) {
-  const char *dirs[] = {
-      ".vls",
-      // ".vls/temp",
-      ".vls/commits",
-      ".vls/objects",
-      ".vls/stage",
-  };
+  const char *dirs[] = {START_DIR, COMMITS_DIR, OBJECTS_DIR, STAGE_DIR};
   for (int i = 0; i < sizeof(dirs) / sizeof(char *); i++) {
     if (mkdir(dirs[i], 0755) < 0) {
       if (errno != EEXIST) {
