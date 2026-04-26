@@ -1,5 +1,5 @@
-#include "utils/error_logger.h"
-#include "utils/md_hasher.h"
+#include "utils/hasher.h"
+#include "utils/logger.h"
 #include "vls_command.h"
 #include <dirent.h>
 #include <openssl/asn1.h>

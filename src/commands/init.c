@@ -1,5 +1,5 @@
-#include "utils/error_logger.h"
 #include "utils/input_output.h"
+#include "utils/logger.h"
 #include "vls_command.h"
 #include <errno.h>
 #include <fcntl.h>

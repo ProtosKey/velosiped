@@ -1,6 +1,6 @@
-#include "utils/error_logger.h"
+#include "utils/hasher.h"
 #include "utils/input_output.h"
-#include "utils/md_hasher.h"
+#include "utils/logger.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <openssl/evp.h>

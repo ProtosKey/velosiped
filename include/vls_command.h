@@ -8,7 +8,7 @@
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
 
-#include "utils/md_hasher.h"
+#include "utils/hasher.h"
 #include <time.h>
 
 typedef struct {

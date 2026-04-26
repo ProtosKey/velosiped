@@ -1,6 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
-#include "utils/dir_visitor.h"
-#include "utils/error_logger.h"
+#include "utils/visitor.h"
+#include "utils/logger.h"
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
