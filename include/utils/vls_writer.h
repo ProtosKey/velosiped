@@ -9,6 +9,6 @@ typedef struct {
   const size_t size;
 } vls_output_t;
 
-int vls_write(vls_output_t out);
+int vls_safety_write(vls_output_t out);
 
 #endif

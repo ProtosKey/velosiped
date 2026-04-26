@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int vls_write_all(vls_output_t out) {
+int vls_safety_write(vls_output_t out) {
   size_t count = 0;
   ssize_t n;
 
