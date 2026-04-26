@@ -1,5 +1,6 @@
 #include "utils/error.h"
 #include "utils/md_hasher.h"
+#include "utils/stage_reader.h"
 #include "vls_command.h"
 #include <dirent.h>
 #include <openssl/asn1.h>
