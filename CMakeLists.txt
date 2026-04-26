@@ -8,6 +8,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 add_executable(vls
     src/main.c
+    src/vls_command.c
     src/utils/console_writer.c
     src/commands/init.c
     src/commands/commit.c

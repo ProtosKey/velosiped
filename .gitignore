@@ -10,3 +10,4 @@ build
 *.temp
 
 CLAUDE.md
+.claude/
