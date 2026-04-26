@@ -37,7 +37,8 @@ int vls_init(const command_data command_data) {
   vls_safety_write((vls_output_t){STDOUT_FILENO, good, strlen(good)});
   return 0;
 exit_with_error:;
+  const int err = errno;
   const char *msg = strerror(errno);
   vls_safety_write((vls_output_t){STDERR_FILENO, msg, strlen(msg)});
-  return errno;
+  return err;
 }
