@@ -9,6 +9,7 @@ gradlew
 gradlew.bat
 gradle/
 
+.cache
 .zed/
 .idea/
 
