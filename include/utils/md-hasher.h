@@ -13,10 +13,10 @@
 
 typedef struct {
   unsigned char bytes[16];
-} vls_md_hash;
+} vls_md_hash_t;
 
-int hash_my_path(const char *, vls_md_hash *);
-int vls_hash_to_string(const vls_md_hash *, char *);
-int is_identical(const vls_md_hash *, const vls_md_hash *);
+int hash_my_path(const char *, vls_md_hash_t *);
+int vls_hash_to_string(const vls_md_hash_t *, char *);
+int is_identical(const vls_md_hash_t *, const vls_md_hash_t *);
 
 #endif

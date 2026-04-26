@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int hash_my_path(const char *path, vls_md_hash *result) {
+int hash_my_path(const char *path, vls_md_hash_t *result) {
   int fd = 0;
   const char *no_sush_file = "No such file";
   if ((fd = open(path, O_RDONLY)) < 0) {
@@ -75,7 +75,7 @@ hash_error:
   return -1;
 }
 
-int vls_hash_to_string(const vls_md_hash *hash, char *result) {
+int vls_hash_to_string(const vls_md_hash_t *hash, char *result) {
   static const char *hex = "0123456789abcdef";
 
   for (int i = 0; i < MD_SIZE; i++) {
@@ -86,6 +86,6 @@ int vls_hash_to_string(const vls_md_hash *hash, char *result) {
   return 0;
 }
 
-int is_identical(const vls_md_hash *first, const vls_md_hash *second) {
+int is_identical(const vls_md_hash_t *first, const vls_md_hash_t *second) {
   return memcmp(first->bytes, second->bytes, MD_SIZE);
 }
