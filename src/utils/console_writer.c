@@ -17,9 +17,9 @@ int vls_write_all(vls_output_t out) {
       if (errno == EINTR) {
         continue;
       }
-      return -1;
+      return errno;
     } else if (n == 0) {
-      return -1;
+      return errno;
     }
     count += n;
   }
