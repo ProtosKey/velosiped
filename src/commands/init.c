@@ -1,6 +1,7 @@
 #include "utils/input_output.h"
 #include "utils/logger.h"
 #include "vls_command.h"
+#include "vls_paths.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -8,7 +9,8 @@
 #include <unistd.h>
 
 int vls_init_func(const int, const char **) {
-  const char *dirs[] = {START_DIR, COMMITS_DIR, OBJECTS_DIR, STAGE_DIR};
+  const char *dirs[] = {VLS_DIR, VLS_COMMITS_DIR, VLS_OBJECTS_DIR,
+                        VLS_STAGE_DIR};
   for (size_t i = 0; i < sizeof(dirs) / sizeof(*dirs); i++) {
     if (mkdir(dirs[i], 0755) < 0 && errno != EEXIST) {
       return vls_report_errno_at(dirs[i], errno);
