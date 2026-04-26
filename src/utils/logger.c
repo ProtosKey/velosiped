@@ -7,6 +7,16 @@ static void write_stderr(const char *s, size_t n) {
   vls_safety_write((vls_output_t){STDERR_FILENO, s, n});
 }
 
+static void write_stdout(const char *s, size_t n) {
+  vls_safety_write((vls_output_t){STDOUT_FILENO, s, n});
+}
+
+int vls_say(const char *msg) {
+  write_stdout(msg, strlen(msg));
+  write_stdout("\n", 1);
+  return 0;
+}
+
 int vls_report(const char *msg) {
   write_stderr(msg, strlen(msg));
   write_stderr("\n", 1);
