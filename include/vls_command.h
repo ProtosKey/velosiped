@@ -4,7 +4,8 @@
 typedef struct {
   const char *command_name;
   const char *description;
-  const char **args;
+  const char **argv;
+  const int argc;
 } command_data_t;
 
 int vls_init(const command_data_t command_data);
