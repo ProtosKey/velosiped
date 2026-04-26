@@ -1,0 +1,8 @@
+#ifndef VLS_ERROR_H
+#define VLS_ERROR_H
+
+int vls_report(const char *msg);
+int vls_report_errno(int err);
+int vls_report_errno_at(const char *ctx, int err);
+
+#endif

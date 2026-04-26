@@ -12,10 +12,12 @@ add_executable(vls
     src/main.c
     src/vls_command.c
     src/utils/console_writer.c
+    src/utils/dir_walker.c
+    src/utils/error.c
+    src/utils/file_copy.c
     src/utils/vls_hasher.c
     src/commands/init.c
     src/commands/add.c
-    src/commands/commit.c
     src/commands/reset.c
     src/commands/commit.c
 )
