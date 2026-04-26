@@ -4,10 +4,11 @@
 typedef struct {
   const char *command_name;
   const char *description;
-} command;
+  const char **args;
+} command_data;
 
-int vls_init();
-int vls_commit();
-int vls_reset();
+int vls_init(const command_data command_data);
+int vls_commit(const command_data command_data);
+int vls_reset(const command_data command_data);
 
 #endif
