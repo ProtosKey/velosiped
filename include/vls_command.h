@@ -8,6 +8,7 @@ typedef struct {
 } command_data_t;
 
 int vls_init(const command_data_t command_data);
+int vls_add(const command_data_t command_data);
 int vls_commit(const command_data_t command_data);
 int vls_reset(const command_data_t command_data);
 
