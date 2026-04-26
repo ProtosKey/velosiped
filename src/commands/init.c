@@ -33,10 +33,10 @@ int vls_init(const command_data command_data) {
   close(fd);
 
   const char *good = "Repository was Successfully created";
-  vls_write((vls_output_t){STDOUT_FILENO, good, strlen(good)});
+  vls_safety_write((vls_output_t){STDOUT_FILENO, good, strlen(good)});
   return 0;
 exit_with_error:;
   const char *msg = strerror(errno);
-  vls_write((vls_output_t){STDERR_FILENO, msg, strlen(msg)});
+  vls_safety_write((vls_output_t){STDERR_FILENO, msg, strlen(msg)});
   return errno;
 }
