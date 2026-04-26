@@ -1,4 +1,4 @@
-#include "utils/error.h"
+#include "utils/error_logger.h"
 #include "utils/input_output.h"
 #include <string.h>
 #include <unistd.h>
@@ -13,9 +13,7 @@ int vls_report(const char *msg) {
   return -1;
 }
 
-int vls_report_errno(int err) {
-  return vls_report(strerror(err));
-}
+int vls_report_errno(int err) { return vls_report(strerror(err)); }
 
 int vls_report_errno_at(const char *ctx, int err) {
   write_stderr(ctx, strlen(ctx));

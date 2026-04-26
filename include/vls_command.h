@@ -7,9 +7,9 @@
 
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
-#include <time.h>
 
 #include "utils/md_hasher.h"
+#include <time.h>
 
 typedef struct {
   const char *command_name;

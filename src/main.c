@@ -10,16 +10,12 @@
   X(reset)
 
 static inline const char *extract_command_name(int *argc, const char ***argv) {
-
-  // отсекаем название утилиты
   *argc -= 1;
   (*argv)++;
 
   const char *result;
   if (*argc > 0) {
     result = (*argv)[0];
-
-    // отсекаем название команды
     *argc -= 1;
     (*argv)++;
   } else {

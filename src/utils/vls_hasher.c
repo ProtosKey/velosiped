@@ -1,4 +1,4 @@
-#include "utils/error.h"
+#include "utils/error_logger.h"
 #include "utils/input_output.h"
 #include "utils/md_hasher.h"
 #include <errno.h>
@@ -62,12 +62,10 @@ hash_error:
 
 int hash_to_string(const vls_md_hash_t *hash, char *result) {
   static const char *hex = "0123456789abcdef";
-
   for (int i = 0; i < MD_SIZE; i++) {
     result[i * 2] = hex[(hash->bytes[i] >> 4) & 0x0F];
     result[i * 2 + 1] = hex[hash->bytes[i] & 0x0F];
   }
-
   return 0;
 }
 

@@ -1,3 +1,4 @@
+#include "utils/error_logger.h"
 #include "utils/input_output.h"
 #include <errno.h>
 #include <string.h>
@@ -12,9 +13,9 @@ int vls_safety_write(vls_output_t out) {
       if (errno == EINTR) {
         continue;
       }
-      return errno;
+      return vls_report_errno(errno);
     } else if (n == 0) {
-      return errno;
+      return vls_report_errno(errno);
     }
     count += n;
   }
