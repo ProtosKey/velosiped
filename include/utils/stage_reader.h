@@ -6,7 +6,7 @@
 
 typedef struct {
   const char *path;
-  const vls_md_hash_t *hash;
+  const vls_md_hash_t hash;
   file_status status;
 } stage;
 

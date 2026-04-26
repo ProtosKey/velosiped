@@ -24,7 +24,7 @@ int stage_file(const char *path, void *ctx) {
       goto error_create;
     }
   }
-  if (add_stage(&(stage){path, &result}) < 0) {
+  if (add_stage(&(stage){path, result}) < 0) {
     return -1;
   }
   return 0;
