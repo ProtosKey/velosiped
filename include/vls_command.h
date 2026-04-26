@@ -4,7 +4,7 @@
 typedef struct {
   const char *command_name;
   const char *description;
-  int (*ptr)(const int, const char **);
+  int (*call)(const int, const char **);
 } command_t;
 
 int vls_init_func(const int, const char **);
