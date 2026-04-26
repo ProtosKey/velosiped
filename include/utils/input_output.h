@@ -10,7 +10,7 @@
 typedef struct {
   const int fd;
   const char *message;
-  size_t size;
+  const size_t size;
 } vls_output_t;
 
 int vls_safety_copy(int in, int out);
