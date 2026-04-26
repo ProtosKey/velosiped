@@ -32,7 +32,7 @@ int vls_init_func(const int, const char **) {
   }
   close(fd);
 
-  const char *good = "Repository was Successfully created";
+  const char *good = "Repository was Successfully created\n";
   vls_safety_write((vls_output_t){STDOUT_FILENO, good, strlen(good)});
   return 0;
 exit_with_error:;
