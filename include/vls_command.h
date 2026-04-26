@@ -8,29 +8,7 @@
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
 
-#include "utils/hasher.h"
-#include <time.h>
-
-typedef struct {
-  const char *command_name;
-  const char *description;
-  int (*call)(const int, const char **);
-} command_t;
-
-typedef struct {
-  const vls_md_hash_t *hash;
-  const char *path;
-  const char *name;
-} object_t;
-
-typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED } file_status;
-
-typedef struct commit_node {
-  struct commit_node *parent;
-  struct commit_node *child;
-  time_t created_time;
-  const char *msg;
-} commit_t;
+#include <vls_types.h>
 
 int vls_init_func(const int, const char **);
 int vls_add_func(const int, const char **);
