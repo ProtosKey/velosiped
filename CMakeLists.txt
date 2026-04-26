@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 3.10)
-project(vls)
+cmake_minimum_required(VERSION 3.21)
+project(vls C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-include_directories(include)
+add_executable(vls
+    src/main.c
+    src/utils/console_writer.c
+    src/commands/init.c
+    src/commands/commit.c
+    src/commands/reset.c
+)
 
-file(GLOB SOURCES "src/*.c")
-
-add_executable(vls ${SOURCES})
+target_include_directories(vls PRIVATE include)
