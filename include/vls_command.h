@@ -1,10 +1,3 @@
-#ifndef NAMES
-#define START_DIR ".vls"
-#define COMMITS_DIR ".vls/commits"
-#define OBJECTS_DIR ".vls/objects"
-#define STAGE_DIR ".vls/stage"
-#endif
-
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
 
