@@ -1,1 +1,0 @@
-/usr/bin/cc -Wl,--dependency-file=CMakeFiles/vls.dir/link.d CMakeFiles/vls.dir/src/main.c.o CMakeFiles/vls.dir/src/utils/console_writer.c.o CMakeFiles/vls.dir/src/commands/init.c.o CMakeFiles/vls.dir/src/commands/commit.c.o CMakeFiles/vls.dir/src/commands/reset.c.o -o vls

@@ -1,3 +1,0 @@
-/home/oriptal/Documents/itmo/opi2/velosiped/build/CMakeFiles/vls.dir
-/home/oriptal/Documents/itmo/opi2/velosiped/build/CMakeFiles/edit_cache.dir
-/home/oriptal/Documents/itmo/opi2/velosiped/build/CMakeFiles/rebuild_cache.dir
