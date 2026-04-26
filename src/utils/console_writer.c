@@ -1,4 +1,5 @@
 #include "utils/vls_writer.h"
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -12,7 +13,12 @@ int vls_write_all(vls_output_t out) {
 
   while (count < out.size) {
     n = write(out.descriptor, out.message + count, out.size - count);
-    if (n == -1 || n == 0) {
+    if (n == -1) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return -1;
+    } else if (n == 0) {
       return -1;
     }
     count += n;
