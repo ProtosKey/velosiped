@@ -7,10 +7,6 @@ int vls_safety_write(vls_output_t out) {
   size_t count = 0;
   ssize_t n;
 
-  if (out.size == 0) {
-    return 0;
-  }
-
   while (count < out.size) {
     n = write(out.descriptor, out.message + count, out.size - count);
     if (n == -1) {
