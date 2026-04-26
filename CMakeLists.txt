@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 find_package(OpenSSL REQUIRED)
+find_package(cJSON REQUIRED)
 
 add_executable(vls
     src/main.c
@@ -17,8 +18,12 @@ add_executable(vls
     src/commands/add.c
     src/commands/commit.c
     src/commands/reset.c
-    src/commands/commit.c
+    # Лишний commit.c удалили
 )
 
 target_include_directories(vls PRIVATE include)
-target_link_libraries(vls PRIVATE OpenSSL::Crypto)
+
+target_link_libraries(vls PRIVATE
+    OpenSSL::Crypto
+    cjson
+)
