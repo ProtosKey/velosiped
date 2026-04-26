@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int vls_init_func(const int c, const char **argv) {
+int vls_init_func(const int, const char **) {
   const char *dirs[] = {
       ".vls",
       // ".vls/temp",
