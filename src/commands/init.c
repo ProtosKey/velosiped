@@ -25,7 +25,8 @@ int vls_init(const command_data command_data) {
 
   int fd = 0;
   const char *name = ".vls/head";
-  if ((fd = creat(name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
+  if ((fd = open(name, O_WRONLY | O_CREAT | O_EXCL,
+                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
     if (errno != EEXIST) {
       goto exit_with_error;
     }
