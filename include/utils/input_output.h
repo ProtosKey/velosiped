@@ -1,9 +1,7 @@
-#ifndef BUFFER_SIZE
-#define BUFFER_SIZE 4096
-#endif
 
 #ifndef WRITER_H
 #define WRITER_H
+#define BUFFER_SIZE 4096
 
 #include <stddef.h>
 
