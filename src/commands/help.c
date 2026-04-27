@@ -1,3 +1,4 @@
+#include "utils/input_output.h"
 #include "utils/logger.h"
 #include "vls_command.h"
 
@@ -15,29 +16,71 @@
   X(commit)
 
 #define PRINT_HELP(name)                                                       \
-  vls_quick("\n");                                                             \
-  vls_quick(vls_##name.command_name);                                          \
-  vls_quick("\t—\t");                                                          \
-  vls_quick(vls_##name.description);                                           \
-  vls_quick("\n");
+  vls_raw("\t");                                                               \
+  vls_raw_green(vls_##name.command_name);                                      \
+  vls_raw("\t");                                                               \
+  vls_raw(vls_##name.description);                                             \
+  vls_raw("\n");
 
 int vls_help_func(const int argc, const char **argv) {
-  vls_quick("\n");
-  vls_say("VeLosiped System (vls) - version control system.");
+  vls_raw_green("\tVeLosiped System (vls)");
+  vls_say("\tversion control system.\n");
 
-  vls_say(CLR_BOLD CLR_GREEN);
-  vls_say("      (`-.                .-')    ");
-  vls_say("    _(OO  )_             ( OO ).  ");
-  vls_say(",--(_/   ,. \\ ,--.      (_)---\\_) ");
-  vls_say("\\   \\   /(__/ |  |.-')  /    _ |  ");
-  vls_say(" \\   \\ /   /  |  | OO ) \\  :` `.  ");
-  vls_say("  \\   '   /,  |  |`-' |  '..`''.) ");
-  vls_say("   \\     /__)(|  '---.' .-._)   \\ ");
-  vls_say("    \\   /     |      |  \\       / ");
-  vls_say("     `-'      `------'   `-----'  ");
-  vls_say(CLR_RESET);
+  vls_raw("A hardcore version control system written in pure C using POSIX "
+          "system calls.\n");
+
+  vls_say("\t      (`-.                .-')    ");
+  vls_say("\t    _(OO  )_             ( OO ).  ");
+  // vls_say("\t,--(_/   ,. \\ ,--.      (_)---\\_) ");
+
+  vls_raw_green("\t,--");
+  vls_raw("(_/   ");
+  vls_raw_green(",. ");
+  vls_raw("\\ ");
+  vls_raw_green(",--.      ");
+  vls_raw("(_)");
+  vls_raw_green("---");
+  vls_say("\\_) ");
+
+  // vls_say("\t\\   \\   /(__/ |  |.-')  /    _ |  ");
+
+  vls_raw_green("\t\\   \\   /");
+  vls_raw("(__/ ");
+  vls_raw_green("|  |");
+  vls_raw(".-')");
+  vls_say_green("  /    _ |  ");
+
+  // vls_say("\t \\   \\ /   /  |  | OO ) \\  :` `.  ");
+
+  vls_raw_green("\t \\   \\ /   /  |  | ");
+  vls_raw("OO ) ");
+  vls_say_green("\\  :` `.  ");
+
+  // vls_say("\t  \\   '   /,  |  |`-' |  '..`''.) ");
+
+  vls_raw_green("\t  \\   '   /");
+  vls_raw(",  ");
+  vls_raw_green("|  |");
+  vls_raw("`-' |  ");
+  vls_raw_green("'..`''.");
+  vls_say(") ");
+
+  // vls_say("\t   \\     /__)(|  '---.' .-._)   \\ ");
+
+  vls_raw_green("\t   \\     /");
+  vls_raw("__)(");
+  vls_raw_green("|  '---.");
+  vls_raw("' ");
+  vls_say_green(".-._)   \\ ");
+
+  vls_say_green("\t    \\   /     |      |  \\       / ");
+  vls_say_green("\t     `-'      `------'   `-----'  ");
+
+  vls_say("The utility has the following commands for easy manipulation of "
+          "your data.\n");
 
   COMMANDS(PRINT_HELP);
+  vls_say(CLR_RESET);
 
   return 0;
 }
