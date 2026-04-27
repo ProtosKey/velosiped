@@ -11,6 +11,11 @@ static void write_stdout(const char *s, size_t n) {
   vls_safety_write((vls_output_t){STDOUT_FILENO, s, n});
 }
 
+int vls_quick(const char *msg) {
+  write_stdout(msg, strlen(msg));
+  return 0;
+}
+
 int vls_say(const char *msg) {
   write_stdout(msg, strlen(msg));
   write_stdout("\n", 1);
