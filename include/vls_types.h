@@ -1,6 +1,7 @@
 #ifndef VLS_TYPES_H
 #define VLS_TYPES_H
 
+#include <cjson/cJSON.h>
 #include <time.h>
 
 typedef struct {
@@ -33,5 +34,21 @@ typedef struct {
   const char *path;
   const vls_md_hash_t hash;
 } stage_t;
+
+typedef struct {
+  const char *path;
+  int index;
+  bool need_write;
+  vls_md_hash_t *hash_new;
+  cJSON *hash_item;
+  cJSON *status_item;
+} stage_ctx_t;
+
+typedef int (*vls_stage_action_t)(cJSON *, stage_ctx_t *ctx);
+
+typedef struct {
+  vls_stage_action_t on_found;
+  vls_stage_action_t on_not_found;
+} stage_ops_t;
 
 #endif
