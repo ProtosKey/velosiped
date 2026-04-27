@@ -11,8 +11,10 @@
 #define COMMANDS(X)                                                            \
   X(init)                                                                      \
   X(help)                                                                      \
+  X(commit)                                                                    \
   X(add)                                                                       \
-  X(commit)
+  X(reset)                                                                     \
+  X(status)
 
 #define PRINT_HELP(name)                                                       \
   vls_raw("\t");                                                               \
@@ -29,7 +31,7 @@ int vls_help_func(const int argc, const char **argv) {
           "system calls.\n");
 
   vls_say("\t      (`-.                .-')    ");
-  vls_say("\t    _(OO  )_             ( OO ).  ");
+  vls_say("\t    _(OO  )_             (  OO).  ");
   // vls_say("\t,--(_/   ,. \\ ,--.      (_)---\\_) ");
 
   vls_raw_green("\t,--");
