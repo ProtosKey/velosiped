@@ -28,7 +28,8 @@ int vls_init_func(const int, const char **) {
 
   char path[PATH_MAX];
   vls_raw("Repository was Successfully initialized");
-  if (getcwd(path, PATH_MAX)) {
+  if (getcwd(path, PATH_MAX) &&
+      vls_join_path(path, PATH_MAX, path, VLS_DIR) == 0) {
     vls_raw(" in ");
     vls_say_green(path);
   } else {

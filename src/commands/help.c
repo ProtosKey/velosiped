@@ -17,14 +17,13 @@
   X(status)
 
 #define PRINT_HELP(name)                                                       \
-  vls_raw("\t");                                                               \
+  vls_raw("\n\t");                                                             \
   vls_raw_green(vls_##name.command_name);                                      \
   vls_raw("\t");                                                               \
-  vls_raw(vls_##name.description);                                             \
-  vls_raw("\n");
+  vls_raw(vls_##name.description);
 
 int vls_help_func(const int argc, const char **argv) {
-  vls_raw_green("\n\tVeLosiped System (vls)");
+  vls_raw_green("\tVeLosiped System (vls)");
   vls_say("\tversion control system.\n");
 
   vls_raw("A hardcore version control system written in pure C using POSIX "
@@ -78,7 +77,7 @@ int vls_help_func(const int argc, const char **argv) {
   vls_say_green("\t     `-'      `------'   `-----'  ");
 
   vls_say("The utility has the following commands for easy manipulation of "
-          "your data.\n");
+          "your data.");
 
   COMMANDS(PRINT_HELP);
   vls_say(CLR_RESET);
