@@ -1,9 +1,8 @@
 #ifndef STAGER_H
 #define STAGER_H
 
-#include "vls_types.h"
-
-int add_stage(stage_t *);
-int remove_stage(stage_t *);
+int check_stages();
+int add_stage(const char *);
+int remove_stage(const char *);
 
 #endif
