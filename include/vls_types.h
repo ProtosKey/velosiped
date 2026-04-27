@@ -19,7 +19,7 @@ typedef struct {
   const char *name;
 } object_t;
 
-typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED } file_status;
+typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED } file_status_t;
 
 typedef struct commit_node {
   struct commit_node *parent;
@@ -27,5 +27,11 @@ typedef struct commit_node {
   time_t created_time;
   const char *msg;
 } commit_t;
+
+typedef struct {
+  const file_status_t *status;
+  const char *path;
+  const vls_md_hash_t hash;
+} stage_t;
 
 #endif
