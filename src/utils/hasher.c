@@ -70,7 +70,9 @@ int hash_to_string(const vls_md_hash_t *hash, char *result) {
   return 0;
 }
 
-int hash_from_string(const char *string, const vls_md_hash_t *result);
+int hash_from_string(const char *string, const vls_md_hash_t *result) {
+  return 0;
+}
 
 int is_identical(const vls_md_hash_t *first, const vls_md_hash_t *second) {
   return memcmp(first->bytes, second->bytes, MD_SIZE);

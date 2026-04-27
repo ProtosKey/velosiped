@@ -1,8 +1,8 @@
 #include "vls_command.h"
 
-command_t vls_init = {
-    "init", "Initialize the lair (.md) and start the clock of history",
-    vls_init_func};
+command_t vls_init = {"init",
+                      "Initialize the lair and start the clock of history",
+                      vls_init_func};
 
 command_t vls_add = {"add", "Stage files or directories for the next snapshot",
                      vls_add_func};

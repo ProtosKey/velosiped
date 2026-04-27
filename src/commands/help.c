@@ -1,4 +1,3 @@
-#include "utils/input_output.h"
 #include "utils/logger.h"
 #include "vls_command.h"
 
@@ -23,7 +22,7 @@
   vls_raw("\n");
 
 int vls_help_func(const int argc, const char **argv) {
-  vls_raw_green("\tVeLosiped System (vls)");
+  vls_raw_green("\n\tVeLosiped System (vls)");
   vls_say("\tversion control system.\n");
 
   vls_raw("A hardcore version control system written in pure C using POSIX "

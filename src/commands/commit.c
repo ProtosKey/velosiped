@@ -1,3 +1,5 @@
+#include "vls_command.h"
+
 // add src/main.c
 // stage/1234/main.c
 // stage/stage < src/main.c main.c hash

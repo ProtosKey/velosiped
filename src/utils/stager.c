@@ -15,6 +15,8 @@
 
 int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
 
+int check_stages() { return 0; }
+
 int update_add(cJSON *json, stage_ctx_t *contex) {
   int out;
   vls_md_hash_t hash_old;

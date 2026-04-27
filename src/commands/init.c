@@ -1,10 +1,10 @@
 #include "utils/fs.h"
-#include "utils/input_output.h"
 #include "utils/logger.h"
 #include "vls_command.h"
 #include "vls_paths.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,9 +24,16 @@ int vls_init_func(const int, const char **) {
   if (fd < 0 && errno != EEXIST) {
     return vls_report_errno_at(name, errno);
   }
-
   close(fd);
-  const char *good = "Repository was Successfully created\n";
-  vls_safety_write((vls_output_t){STDOUT_FILENO, good, strlen(good)});
+
+  char path[PATH_MAX];
+  vls_raw("Repository was Successfully initialized");
+  if (getcwd(path, PATH_MAX)) {
+    vls_raw(" in ");
+    vls_say_green(path);
+  } else {
+    vls_raw("\n");
+  }
+
   return 0;
 }
