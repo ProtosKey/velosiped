@@ -11,14 +11,31 @@ static void write_stdout(const char *s, size_t n) {
   vls_safety_write((vls_output_t){STDOUT_FILENO, s, n});
 }
 
-int vls_quick(const char *msg) {
+int vls_raw(const char *msg) {
   write_stdout(msg, strlen(msg));
+  return 0;
+}
+
+int vls_raw_green(const char *msg) {
+  write_stdout(CLR_BOLD, strlen(CLR_BOLD));
+  write_stdout(CLR_GREEN, strlen(CLR_GREEN));
+  write_stdout(msg, strlen(msg));
+  write_stdout(CLR_RESET, strlen(CLR_RESET));
   return 0;
 }
 
 int vls_say(const char *msg) {
   write_stdout(msg, strlen(msg));
   write_stdout("\n", 1);
+  return 0;
+}
+
+int vls_say_green(const char *msg) {
+  write_stdout(CLR_BOLD, strlen(CLR_BOLD));
+  write_stdout(CLR_GREEN, strlen(CLR_GREEN));
+  write_stdout(msg, strlen(msg));
+  write_stdout("\n", 1);
+  write_stdout(CLR_RESET, strlen(CLR_RESET));
   return 0;
 }
 

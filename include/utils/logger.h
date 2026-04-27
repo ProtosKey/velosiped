@@ -1,8 +1,18 @@
 #ifndef VLS_ERROR_LOGGER_H
 #define VLS_ERROR_LOGGER_H
 
-int vls_quick(const char *msg);
-int vls_say(const char *msg);
+#define CLR_RESET "\033[0m"
+#define CLR_BOLD "\033[1m"
+#define CLR_CYAN "\033[36m"
+#define CLR_GREEN "\033[32m"
+#define CLR_WHITE "\033[37m"
+#define CLR_GRAY "\033[90m"
+
+int vls_say(const char *);
+int vls_say_green(const char *);
+int vls_raw(const char *);
+int vls_raw_green(const char *);
+
 int vls_report(const char *msg);
 int vls_report_at(const char *ctx, const char *msg);
 int vls_report_errno(int err);
