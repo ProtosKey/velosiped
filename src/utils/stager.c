@@ -17,7 +17,74 @@ static char *path_name = "path";
 static char *hash_name = "hash";
 static char *status_name = "status";
 
+int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
+
+int update_add(cJSON *json, stage_ctx_t *contex) {
+  int out;
+  vls_md_hash_t hash_old;
+  contex->need_write = false;
+  const char *msg = "Cannot check hash";
+  if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0) {
+    return vls_report_errno_at(msg, out);
+  } else {
+    if ((out = memcmp(contex->hash_new->bytes, hash_old.bytes, MD_SIZE)) < 0) {
+      return vls_report_errno_at(msg, out);
+    } else {
+      if (out != 0) {
+        char hash_str[33];
+        contex->need_write = true;
+        hash_to_string(contex->hash_new, hash_str);
+        cJSON_SetValuestring(contex->hash_item, hash_str);
+        cJSON_SetNumberValue(contex->status_item, MODIFIED);
+      }
+    }
+  }
+  return 0;
+}
+
+int update_new_add(cJSON *json, stage_ctx_t *contex) {
+  cJSON *stage = cJSON_CreateObject();
+  cJSON_AddStringToObject(stage, path_name, contex->path);
+
+  char hash_str[33];
+  hash_to_string(contex->hash_new, hash_str);
+  cJSON_AddStringToObject(stage, hash_name, hash_str);
+  cJSON_AddNumberToObject(stage, status_name, CREATED);
+  cJSON_AddItemToArray(json, stage);
+  return 0;
+}
+
 int add_stage(const char *path) {
+  int out;
+  if ((out = execute_action(path, &(stage_ops_t){*update_add, *update_new_add},
+                            &(stage_ctx_t){path})) < 0) {
+    return out;
+  }
+  return 0;
+}
+
+int remove(cJSON *json, stage_ctx_t *contex) {
+  contex->need_write = true;
+  cJSON_DeleteItemFromArray(json, contex->index);
+  return 0;
+}
+
+int no_remove(cJSON *json, stage_ctx_t *contex) {
+  contex->need_write = false;
+  return 0;
+}
+
+int remove_stage(const char *path) {
+  int out;
+  if ((out = execute_action(path, &(stage_ops_t){*remove, *no_remove},
+                            &(stage_ctx_t){path})) < 0) {
+    return out;
+  }
+  return 0;
+}
+
+int execute_action(const char *path, const stage_ops_t *action,
+                   stage_ctx_t *ctx) {
   int fd = 0;
   int out = -1;
   if ((fd = open(VLS_STAGE, O_RDONLY)) < 0) {
@@ -52,41 +119,40 @@ int add_stage(const char *path) {
 
     json = cJSON_ParseWithLength(map, file.st_size);
     if (json && cJSON_IsArray(json)) {
-      vls_md_hash_t old_hash;
       cJSON *elem = NULL;
 
+      int i = 0;
       cJSON_ArrayForEach(elem, json) {
         cJSON *path_check = cJSON_GetObjectItemCaseSensitive(elem, path_name);
-        cJSON *hash_old = cJSON_GetObjectItemCaseSensitive(elem, hash_name);
-        cJSON *status_old = cJSON_GetObjectItemCaseSensitive(elem, status_name);
+        cJSON *hash_item = cJSON_GetObjectItemCaseSensitive(elem, hash_name);
+        cJSON *status_item =
+            cJSON_GetObjectItemCaseSensitive(elem, status_name);
 
         if (!cJSON_IsString(path_check)) {
           need_json = true;
           break;
         }
 
-        if (cJSON_IsString(hash_old) && (hash_old->valuestring) != NULL) {
-          if ((out = hash_from_string(hash_old->valuestring, &old_hash)) < 0) {
-            need_json = true;
-            break;
-          }
-        } else {
+        if (!(cJSON_IsString(hash_item) && (hash_item->valuestring) != NULL)) {
           need_json = true;
           break;
         }
 
         if (strcmp(path, path_check->valuestring) == 0) {
           need_new = false;
-          if (memcmp(hash_new.bytes, old_hash.bytes, MD_SIZE) != 0) {
-            char hash_str[33];
-            hash_to_string(&hash_new, hash_str);
-            cJSON_SetValuestring(hash_old, hash_str);
-            cJSON_SetNumberValue(status_old, MODIFIED);
-          } else {
-            need_write = false;
+          ctx->index = i;
+          ctx->need_write = need_write;
+          ctx->hash_item = hash_item;
+          ctx->status_item = status_item;
+          ctx->hash_new = &hash_new;
+          if ((out = action->on_found(json, ctx)) < 0) {
+            close(fd);
+            cJSON_Delete(json);
+            return out;
           }
-          break;
+          need_write = ctx->need_write;
         }
+        i++;
       }
     } else {
       need_json = true;
@@ -100,15 +166,11 @@ int add_stage(const char *path) {
       json = cJSON_CreateArray();
     }
     if (need_new) {
-      cJSON *stage = cJSON_CreateObject();
-      cJSON_AddStringToObject(stage, path_name, path);
-
-      char hash_str[33];
-      hash_to_string(&hash_new, hash_str);
-
-      cJSON_AddStringToObject(stage, hash_name, hash_str);
-      cJSON_AddNumberToObject(stage, status_name, CREATED);
-      cJSON_AddItemToArray(json, stage);
+      if ((out = action->on_not_found(json, ctx)) < 0) {
+        close(fd);
+        cJSON_Delete(json);
+        return out;
+      }
     }
     char *json_string = cJSON_PrintUnformatted(json);
     if (!json_string) {
@@ -131,5 +193,3 @@ int add_stage(const char *path) {
   }
   return 0;
 }
-
-int remove_stage(const char *path);
