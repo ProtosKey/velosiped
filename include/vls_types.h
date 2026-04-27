@@ -51,4 +51,18 @@ typedef struct {
   vls_stage_action_t on_not_found;
 } stage_ops_t;
 
+typedef struct node_t {
+  void *data;
+  struct node_t *prev;
+  struct node_t *next;
+} node_t;
+
+typedef struct {
+  cJSON *json;
+  const node_t *untracted;
+  const node_t *new;
+  const node_t *deleted;
+  const node_t *modified;
+} status_t;
+
 #endif
