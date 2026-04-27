@@ -3,9 +3,7 @@
 #include "utils/visitor.h"
 #include "vls_command.h"
 #include <dirent.h>
-#include <errno.h>
 #include <openssl/asn1.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
