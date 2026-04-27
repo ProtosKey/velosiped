@@ -1,4 +1,3 @@
-
 #ifndef WRITER_H
 #define WRITER_H
 #define BUFFER_SIZE 4096

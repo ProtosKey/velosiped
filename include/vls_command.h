@@ -2,7 +2,7 @@
 #ifndef VLS_COMMAND_H
 #define VLS_COMMAND_H
 
-#include <vls_types.h>
+#include "vls_types.h"
 
 int vls_init_func(const int, const char **);
 int vls_add_func(const int, const char **);
