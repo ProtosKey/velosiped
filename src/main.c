@@ -7,7 +7,8 @@
   X(help)                                                                      \
   X(commit)                                                                    \
   X(add)                                                                       \
-  X(reset)
+  X(reset)                                                                     \
+  X(status)
 
 static inline const char *extract_command_name(int *argc, const char ***argv) {
   *argc -= 1;

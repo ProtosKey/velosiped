@@ -1,8 +1,8 @@
 #include "vls_command.h"
 
-command_t vls_init = {"init",
-                      "Initialize the lair and start the clock of history",
-                      vls_init_func};
+command_t vls_init = {
+    "init", "Initialize the repository and start the clock of you history",
+    vls_init_func};
 
 command_t vls_add = {"add", "Stage files or directories for the next snapshot",
                      vls_add_func};
@@ -17,3 +17,7 @@ command_t vls_reset = {"reset",
 
 command_t vls_help = {
     "help", "Show this manual for survivors and code-warriors", vls_help_func};
+
+command_t vls_status = {
+    "status", "Show the current state of the staging area and tracked files",
+    vls_status_funct};
