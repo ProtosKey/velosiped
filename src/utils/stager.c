@@ -13,8 +13,80 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static char *path_name = "path";
+static char *hash_name = "hash";
+static char *status_name = "status";
+
+int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
+
+int update_add(cJSON *json, stage_ctx_t *contex) {
+  int out;
+  vls_md_hash_t hash_old;
+  contex->need_write = false;
+  const char *msg = "Cannot check hash";
+  if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0) {
+    return vls_report_errno_at(msg, out);
+  } else {
+    if ((out = memcmp(contex->hash_new->bytes, hash_old.bytes, MD_SIZE)) < 0) {
+      return vls_report_errno_at(msg, out);
+    } else {
+      if (out != 0) {
+        char hash_str[33];
+        contex->need_write = true;
+        hash_to_string(contex->hash_new, hash_str);
+        cJSON_SetValuestring(contex->hash_item, hash_str);
+        cJSON_SetNumberValue(contex->status_item, MODIFIED);
+      }
+    }
+  }
+  return 0;
+}
+
+int update_new_add(cJSON *json, stage_ctx_t *contex) {
+  cJSON *stage = cJSON_CreateObject();
+  cJSON_AddStringToObject(stage, path_name, contex->path);
+
+  char hash_str[33];
+  hash_to_string(contex->hash_new, hash_str);
+  cJSON_AddStringToObject(stage, hash_name, hash_str);
+  cJSON_AddNumberToObject(stage, status_name, CREATED);
+  cJSON_AddItemToArray(json, stage);
+  return 0;
+}
+
 int add_stage(const char *path) {
+  int out;
+  if ((out = execute_action(path, &(stage_ops_t){*update_add, *update_new_add},
+                            &(stage_ctx_t){path})) < 0) {
+    return out;
+  }
+  return 0;
+}
+
+int remove(cJSON *json, stage_ctx_t *contex) {
+  contex->need_write = true;
+  cJSON_DeleteItemFromArray(json, contex->index);
+  return 0;
+}
+
+int no_remove(cJSON *json, stage_ctx_t *contex) {
+  contex->need_write = false;
+  return 0;
+}
+
+int remove_stage(const char *path) {
+  int out;
+  if ((out = execute_action(path, &(stage_ops_t){*remove, *no_remove},
+                            &(stage_ctx_t){path})) < 0) {
+    return out;
+  }
+  return 0;
+}
+
+int execute_action(const char *path, const stage_ops_t *action,
+                   stage_ctx_t *ctx) {
   int fd = 0;
+  int out = -1;
   if ((fd = open(VLS_STAGE, O_RDONLY)) < 0) {
     return vls_report_errno(errno);
   };
@@ -25,105 +97,99 @@ int add_stage(const char *path) {
     return vls_report_errno(errno);
   }
 
-  if (file.st_size == 0) {
-    goto skip_read;
+  vls_md_hash_t hash_new;
+  if ((out = hash_my_path(path, &hash_new)) < 0) {
+    close(fd);
+    return out;
   }
 
+  cJSON *json = NULL;
+  bool need_new = true;
+  bool need_json = true;
+  bool need_write = true;
   char *msg_handler = "Unexpected error";
-  char *map = mmap(NULL, file.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (map == MAP_FAILED) {
-    msg_handler = "failed to open the stage";
-    goto error_close;
-  }
-
-  cJSON *json = cJSON_ParseWithLength(map, file.st_size);
-  if (!(json && cJSON_IsArray(json))) {
-    cJSON_Delete(json);
-    goto skip_read;
-  }
-
-  vls_md_hash_t hashNew;
-  vls_md_hash_t oldHash;
-  if (hash_my_path(path, &hashNew) < 0) {
-    return -1;
-  }
-
-  cJSON *elem = NULL;
-  cJSON_ArrayForEach(elem, json) {
-    cJSON *pathCheck = cJSON_GetObjectItemCaseSensitive(elem, "path");
-    cJSON *hashOld = cJSON_GetObjectItemCaseSensitive(elem, "hash");
-    cJSON *status = cJSON_GetObjectItemCaseSensitive(elem, "status");
-
-    if (!cJSON_IsString(pathCheck)) {
-      msg_handler = "Path must be a string";
-      goto error_close;
+  if (file.st_size != 0) {
+    need_json = false;
+    char *map = mmap(NULL, file.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (map == MAP_FAILED) {
+      cJSON_Delete(json);
+      close(fd);
+      return vls_report_errno(errno);
     }
-    if (cJSON_IsString(hashOld) && (hashOld->valuestring) != NULL) {
-      if (hash_from_string(hashOld->valuestring, &oldHash) < 0) {
-        return -1;
+
+    json = cJSON_ParseWithLength(map, file.st_size);
+    if (json && cJSON_IsArray(json)) {
+      cJSON *elem = NULL;
+
+      int i = 0;
+      cJSON_ArrayForEach(elem, json) {
+        cJSON *path_check = cJSON_GetObjectItemCaseSensitive(elem, path_name);
+        cJSON *hash_item = cJSON_GetObjectItemCaseSensitive(elem, hash_name);
+        cJSON *status_item =
+            cJSON_GetObjectItemCaseSensitive(elem, status_name);
+
+        if (!cJSON_IsString(path_check)) {
+          need_json = true;
+          break;
+        }
+
+        if (!(cJSON_IsString(hash_item) && (hash_item->valuestring) != NULL)) {
+          need_json = true;
+          break;
+        }
+
+        if (strcmp(path, path_check->valuestring) == 0) {
+          need_new = false;
+          ctx->index = i;
+          ctx->need_write = need_write;
+          ctx->hash_item = hash_item;
+          ctx->status_item = status_item;
+          ctx->hash_new = &hash_new;
+          if ((out = action->on_found(json, ctx)) < 0) {
+            close(fd);
+            cJSON_Delete(json);
+            return out;
+          }
+          need_write = ctx->need_write;
+        }
+        i++;
       }
     } else {
-      msg_handler = "Hex must be a string";
-      goto error_close;
+      need_json = true;
     }
-    if (strcmp(path, pathCheck->valuestring) == 0) {
-      munmap(map, file.st_size);
-      if (memcmp(hashNew.bytes, oldHash.bytes, MD_SIZE) != 0) {
-        char newHashStr[33];
-        hash_to_string(&hashNew, newHashStr);
-        cJSON_SetValuestring(hashOld, newHashStr);
-        cJSON_SetNumberValue(status, MODIFIED);
-        goto write_stage;
-      } else {
-        goto end_read;
+    munmap(map, file.st_size);
+  }
+  close(fd);
+  if (need_write) {
+    if (need_json) {
+      cJSON_Delete(json);
+      json = cJSON_CreateArray();
+    }
+    if (need_new) {
+      if ((out = action->on_not_found(json, ctx)) < 0) {
+        close(fd);
+        cJSON_Delete(json);
+        return out;
       }
     }
-  }
-  munmap(map, file.st_size);
-  goto write_stage;
-skip_read:
-  json = cJSON_CreateArray();
-  cJSON *first_entry = cJSON_CreateObject();
-  cJSON_AddStringToObject(first_entry, "path", path);
+    char *json_string = cJSON_PrintUnformatted(json);
+    if (!json_string) {
+      cJSON_Delete(json);
+      return vls_report("Cannot update stage.json");
+    }
 
-  vls_md_hash_t hash;
-  if (hash_my_path(path, &hash) < 0) {
-    close(fd);
     cJSON_Delete(json);
-    return -1;
-  }
-  char hash_str[33];
-  hash_to_string(&hash, hash_str);
-  cJSON_AddStringToObject(first_entry, "hash", hash_str);
-  cJSON_AddNumberToObject(first_entry, "status", CREATED);
-  cJSON_AddItemToArray(json, first_entry);
-  goto end_read;
-write_stage:
-  char *json_string = cJSON_PrintUnformatted(json);
-  if (!json_string) {
-    msg_handler = "Cannot update stage.json";
-    goto error_close;
-  }
+    if ((fd = open(VLS_STAGE, O_WRONLY | O_CREAT | O_TRUNC)) < 0) {
+      free(json_string);
+      return vls_report_errno(errno);
+    }
 
-  close(fd);
-  if ((fd = open(VLS_STAGE, O_WRONLY | O_CREAT | O_TRUNC)) < 0) {
-    msg_handler = strerror(errno);
-    goto error_close;
-  }
-
-  if (!vls_safety_write((vls_output_t){fd, json_string, strlen(json_string)})) {
+    if ((out = vls_safety_write(
+             (vls_output_t){fd, json_string, strlen(json_string)})) < 0) {
+      free(json_string);
+      return out;
+    }
     free(json_string);
-    return -1;
   }
-  free(json_string);
-end_read:
-  cJSON_Delete(json);
   return 0;
-error_close:
-  free(json_string);
-  close(fd);
-  cJSON_Delete(json);
-  return vls_report(msg_handler);
 }
-
-int remove_stage(const char *path);
