@@ -1,11 +1,8 @@
 #include <vls_types.h>
 
-#ifndef MD_SIZE
-#define MD_SIZE 16
-#endif
-
 #ifndef MD_HESHER_H
 #define MD_HESHER_H
+#define MD_SIZE 16
 
 #include <openssl/md5.h>
 

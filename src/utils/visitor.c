@@ -1,28 +1,18 @@
+#include "vls_paths.h"
 #define _POSIX_C_SOURCE 200809L
-#include "utils/visitor.h"
+#include "utils/fs.h"
 #include "utils/logger.h"
+#include "utils/visitor.h"
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
 static bool should_skip(const char *name) {
   return strcmp(name, ".") == 0 || strcmp(name, "..") == 0 ||
-         strcmp(name, ".vls") == 0;
-}
-
-static int join_path(char *out, size_t cap, const char *dir, const char *name) {
-  size_t dlen = strlen(dir);
-  const char *sep = (dlen > 0 && dir[dlen - 1] != '/') ? "/" : "";
-  int n = snprintf(out, cap, "%s%s%s", dir, sep, name);
-  if (n < 0 || (size_t)n >= cap) {
-    errno = ENAMETOOLONG;
-    return -1;
-  }
-  return 0;
+         strcmp(name, VLS_DIR) == 0;
 }
 
 static int walk_directory(vls_callback_t callback, const char *path,
@@ -38,7 +28,7 @@ static int walk_directory(vls_callback_t callback, const char *path,
       continue;
 
     char child[PATH_MAX];
-    if (join_path(child, sizeof child, path, e->d_name) < 0) {
+    if (vls_join_path(child, sizeof child, path, e->d_name) < 0) {
       rc = vls_report_errno_at(path, errno);
       break;
     }
@@ -60,5 +50,5 @@ int walk_dir(vls_callback_t callback, const char *path, void *ctx) {
   if (S_ISDIR(st.st_mode))
     return walk_directory(callback, path, ctx);
 
-  return vls_report("Not a file, not a directory");
+  return vls_report_at(path, "Not a file, not a directory");
 }

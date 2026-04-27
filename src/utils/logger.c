@@ -23,6 +23,12 @@ int vls_report(const char *msg) {
   return -1;
 }
 
+int vls_report_at(const char *ctx, const char *msg) {
+  write_stderr(ctx, strlen(ctx));
+  write_stderr(": ", 2);
+  return vls_report(msg);
+}
+
 int vls_report_errno(int err) { return vls_report(strerror(err)); }
 
 int vls_report_errno_at(const char *ctx, int err) {
