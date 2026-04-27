@@ -16,9 +16,12 @@ add_executable(vls
     src/utils/visitor.c
     src/utils/logger.c
     src/utils/hasher.c
+    src/utils/fs.c
     src/commands/init.c
     src/commands/add.c
     src/commands/commit.c
+    src/commands/help.c
+    src/commands/reset.c
 )
 
 target_include_directories(vls PRIVATE include)
