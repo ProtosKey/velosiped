@@ -16,6 +16,7 @@ add_executable(vls
     src/utils/visitor.c
     src/utils/logger.c
     src/utils/hasher.c
+    src/utils/stager.c
     src/utils/fs.c
     src/commands/init.c
     src/commands/add.c
