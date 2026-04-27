@@ -13,10 +13,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static char *path_name = "path";
-static char *hash_name = "hash";
-static char *status_name = "status";
-
 int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
 
 int update_add(cJSON *json, stage_ctx_t *contex) {
