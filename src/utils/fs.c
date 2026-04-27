@@ -1,8 +1,11 @@
 #include "utils/input_output.h"
 #include "utils/logger.h"
+#include "vls_paths.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,4 +62,40 @@ int vls_copy_file(const char *src, const char *dst, int dst_oflag) {
   close(src_fd);
   close(dst_fd);
   return result;
+}
+
+int vls_find_root(char *out, size_t cap) {
+  char path[PATH_MAX];
+  char *msg = "The repository was not initialized";
+  if (!getcwd(path, PATH_MAX)) {
+    return vls_report_errno(errno);
+  }
+  while (true) {
+    char check[PATH_MAX];
+    size_t plen = strlen(path);
+    const char *sep = (plen > 0 && path[plen - 1] != '/') ? "/" : "";
+    if (snprintf(check, PATH_MAX, "%s%s%s", path, sep, VLS_DIR) >= PATH_MAX) {
+      return vls_report_errno(ENAMETOOLONG);
+    }
+    struct stat file;
+    if (stat(check, &file) == 0 && S_ISDIR(file.st_mode)) {
+      if (plen >= cap) {
+        return vls_report_errno(ENAMETOOLONG);
+      }
+      memcpy(out, path, plen + 1);
+      return 0;
+    }
+    if (strcmp(path, "/") == 0 || strlen("/") == 0) {
+      return vls_report(msg);
+    }
+    char *last = strrchr(path, '/');
+    if (last == path) {
+      return vls_report(msg);
+    } else if (last) {
+      *last = '\0';
+    } else {
+      break;
+    }
+  }
+  return vls_report("Unexpected erron");
 }
