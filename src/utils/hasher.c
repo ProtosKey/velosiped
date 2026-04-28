@@ -67,10 +67,39 @@ int hash_to_string(const vls_md_hash_t *hash, char *result) {
     result[i * 2] = hex[(hash->bytes[i] >> 4) & 0x0F];
     result[i * 2 + 1] = hex[hash->bytes[i] & 0x0F];
   }
+  result[MD_SIZE * 2] = '\0';
   return 0;
 }
 
-int hash_from_string(const char *string, const vls_md_hash_t *result) {
+int hash_from_string(char *string, vls_md_hash_t *result) {
+  if (!string || !result)
+    return -1;
+
+  for (int i = 0; i < MD_SIZE; i++) {
+    unsigned char high, low;
+
+    char c1 = string[i * 2];
+    if (c1 >= '0' && c1 <= '9')
+      high = c1 - '0';
+    else if (c1 >= 'a' && c1 <= 'f')
+      high = c1 - 'a' + 10;
+    else if (c1 >= 'A' && c1 <= 'F')
+      high = c1 - 'A' + 10;
+    else
+      return -1;
+
+    char c2 = string[i * 2 + 1];
+    if (c2 >= '0' && c2 <= '9')
+      low = c2 - '0';
+    else if (c2 >= 'a' && c2 <= 'f')
+      low = c2 - 'a' + 10;
+    else if (c2 >= 'A' && c2 <= 'F')
+      low = c2 - 'A' + 10;
+    else
+      return -1;
+    result->bytes[i] = (high << 4) | low;
+  }
+
   return 0;
 }
 

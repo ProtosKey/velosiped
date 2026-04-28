@@ -27,16 +27,12 @@ int update_add(cJSON *json, stage_ctx_t *contex) {
   if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0) {
     return vls_report_errno_at(msg, out);
   } else {
-    if ((out = memcmp(contex->hash_new->bytes, hash_old.bytes, MD_SIZE)) < 0) {
-      return vls_report_errno_at(msg, out);
-    } else {
-      if (out != 0) {
-        char hash_str[33];
-        contex->need_write = true;
-        hash_to_string(contex->hash_new, hash_str);
-        cJSON_SetValuestring(contex->hash_item, hash_str);
-        cJSON_SetNumberValue(contex->status_item, MODIFIED);
-      }
+    if (memcmp(contex->hash_new->bytes, hash_old.bytes, MD_SIZE) != 0) {
+      char hash_str[33];
+      contex->need_write = true;
+      hash_to_string(contex->hash_new, hash_str);
+      cJSON_SetValuestring(contex->hash_item, hash_str);
+      cJSON_SetNumberValue(contex->status_item, MODIFIED);
     }
   }
   return 0;

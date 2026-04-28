@@ -7,7 +7,7 @@
 
 int hash_my_path(const char *, vls_md_hash_t *);
 int hash_to_string(const vls_md_hash_t *, char *);
-int hash_from_string(const char *, const vls_md_hash_t *);
+int hash_from_string(char *, vls_md_hash_t *);
 int is_identical(const vls_md_hash_t *, const vls_md_hash_t *);
 
 #endif
