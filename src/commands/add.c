@@ -12,6 +12,8 @@ int execute_add(const char *path, void *ctx) {
   if ((out = add_stage(path)) < 0) {
     return out;
   }
+  vls_raw_green(path);
+  vls_say(" был успешно добавлен");
   return 0;
 }
 
