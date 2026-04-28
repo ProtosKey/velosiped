@@ -2,6 +2,7 @@
 #include "utils/hasher.h"
 #include "utils/input_output.h"
 #include "utils/logger.h"
+#include "utils/time.h"
 #include "vls_paths.h"
 #include "vls_types.h"
 #include <cjson/cJSON.h>
@@ -13,7 +14,15 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
+
+#define VLS_FILES(X)                                                           \
+  X(hash)                                                                      \
+  X(msg)                                                                       \
+  X(next)                                                                      \
+  X(prev)                                                                      \
+  X(time)
 
 static bool advance_status(cJSON *item) {
   cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
@@ -77,34 +86,112 @@ static void update_stage_statuses(cJSON *json) {
   }
 }
 
-static int snapshot_stage_to_commit_dir(void) {
-  vls_md_hash_t commit_hash;
-  if (hash_my_path(VLS_STAGE, &commit_hash) < 0)
+static int read_head_hash(vls_md_hash_t *out) {
+  int fd = open(VLS_HEAD_FILE, O_RDONLY);
+  if (fd < 0)
     return -1;
 
+  char buf[33] = {0};
+  ssize_t n = read(fd, buf, 32);
+  close(fd);
+  if (n != 32)
+    return -1;
+  return hash_from_string(buf, out);
+}
+
+static int write_head_hash(const vls_md_hash_t *hash) {
   char hash_str[33];
-  hash_to_string(&commit_hash, hash_str);
+  hash_to_string(hash, hash_str);
 
-  char commit_dir[PATH_MAX];
-  if (vls_join_path(commit_dir, sizeof commit_dir, VLS_COMMITS_DIR, hash_str) <
-      0)
+  int fd = open(VLS_HEAD_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  if (fd < 0)
+    return vls_report_errno_at(VLS_HEAD_FILE, errno);
+  int rc = vls_safety_write((vls_output_t){fd, hash_str, strlen(hash_str)});
+  close(fd);
+  return rc;
+}
+
+static int save_commit(const commit_t *commit) {
+  char hash_str[33];
+  hash_to_string(&commit->hash, hash_str);
+
+  char commit_path[PATH_MAX];
+  if (vls_join_path(commit_path, PATH_MAX, VLS_COMMITS_DIR, hash_str) < 0)
     return -1;
-  if (vls_ensure_dir(commit_dir) < 0)
+  if (vls_ensure_dir(commit_path) < 0)
     return -1;
 
   char commit_json[PATH_MAX];
-  if (vls_join_path(commit_json, sizeof commit_json, commit_dir,
-                    "commit.json") < 0)
+  if (vls_join_path(commit_json, PATH_MAX, commit_path, "commit.json") < 0)
+    return -1;
+  if (vls_copy_file(VLS_STAGE, commit_json, O_CREAT | O_WRONLY | O_TRUNC) < 0)
     return -1;
 
-  return vls_copy_file(VLS_STAGE, commit_json, O_CREAT | O_WRONLY | O_TRUNC);
+  int cmt_fd = open(commit_path, O_RDONLY | O_DIRECTORY);
+  if (cmt_fd < 0)
+    return vls_report_errno_at(commit_path, errno);
+
+  int oflag = O_CREAT | O_WRONLY | O_TRUNC;
+  int mod = 0644;
+
+#define INIT(name) int name##_fd = openat(cmt_fd, #name, oflag, mod);
+  VLS_FILES(INIT)
+#undef INIT
+
+  int rc = 0;
+#define CHECK(name)                                                            \
+  if (name##_fd < 0) {                                                         \
+    rc = -1;                                                                   \
+    vls_report_errno_at(#name, errno);                                         \
+    goto cleanup;                                                              \
+  }
+  VLS_FILES(CHECK)
+#undef CHECK
+
+  vls_safety_write((vls_output_t){hash_fd, hash_str, strlen(hash_str)});
+
+  const char *msg = commit->msg ? commit->msg : "";
+  vls_safety_write((vls_output_t){msg_fd, msg, strlen(msg)});
+
+  if (commit->prev) {
+    char prev_str[33];
+    hash_to_string(&commit->prev->hash, prev_str);
+    vls_safety_write((vls_output_t){prev_fd, prev_str, strlen(prev_str)});
+  }
+
+  write_time_to_vls(time_fd);
+
+cleanup:
+#define CLOSE(name) close(name##_fd);
+  VLS_FILES(CLOSE)
+#undef CLOSE
+
+  close(cmt_fd);
+  return rc;
 }
 
 int vls_commit_func(const int argc, const char **argv) {
   if (vls_ensure_dir(VLS_COMMITS_DIR) < 0)
     return -1;
 
-  if (snapshot_stage_to_commit_dir() < 0)
+  vls_md_hash_t commit_hash;
+  if (hash_my_path(VLS_STAGE, &commit_hash) < 0)
+    return -1;
+
+  commit_t parent = {0};
+  bool has_parent = (read_head_hash(&parent.hash) == 0);
+
+  commit_t self = {
+      .prev = has_parent ? &parent : NULL,
+      .next = NULL,
+      .created_time = time(NULL),
+      .hash = commit_hash,
+      .msg = (argc > 0 && argv[0]) ? argv[0] : "",
+  };
+
+  if (save_commit(&self) < 0)
+    return -1;
+  if (write_head_hash(&commit_hash) < 0)
     return -1;
 
   int fd = vls_ensure_file(VLS_STAGE, O_RDONLY);
