@@ -7,7 +7,9 @@ static char *path_name = "path";
 static char *hash_name = "hash";
 static char *status_name = "status";
 
-int check_stages();
+typedef int (*collect_data)(stage_ctx_t *, void *);
+
+int check_stages(collect_data, void *);
 int check_stage(const char *, stage_t *stage);
 int add_stage(const char *);
 int remove_stage(const char *);

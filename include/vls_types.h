@@ -22,7 +22,7 @@ typedef struct {
 
 typedef enum {
   UNCHANGED = 0b0,
-  CREATED = 0b1,
+  NEW = 0b1,
   MODIFIED = 0b10,
   DELETED = 0b100,
   UNTRACTED = 0b1000
@@ -66,11 +66,12 @@ typedef struct node_t {
 
 typedef struct {
   cJSON *json;
-  node_t *untracted;
-  node_t *new;
+  node_t *staged_new;
+  node_t *staged_modified;
+  node_t *staged_not_modified;
   node_t *deleted;
   node_t *modified;
-  node_t *old;
+  node_t *untrackted;
 } status_t;
 
 #endif
