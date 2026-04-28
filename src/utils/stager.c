@@ -31,6 +31,27 @@ int update_add(cJSON *json, stage_ctx_t *contex) {
       char hash_str[33];
       contex->need_write = true;
       hash_to_string(contex->hash_new, hash_str);
+      int out;
+      char root[PATH_MAX];
+      if ((out = vls_find_root(root, PATH_MAX)) < 0)
+        return out;
+      char path[PATH_MAX];
+      if ((out = vls_join_path(path, PATH_MAX, root, VLS_STAGE_DIR)) < 0)
+        return out;
+      char file_path_new[PATH_MAX];
+      if ((out = vls_join_path(file_path_new, PATH_MAX, path, hash_str)) < 0)
+        return out;
+      char file_path_old[PATH_MAX];
+      if ((out = vls_join_path(file_path_old, PATH_MAX, path,
+                               contex->hash_item->valuestring)) < 0)
+        return out;
+
+      if (unlink(file_path_old) < 0) {
+        return vls_report_errno(errno);
+      }
+      if ((out = vls_copy_file(contex->abs_path, file_path_new,
+                               O_CREAT | O_TRUNC | O_WRONLY)) < 0)
+        return out;
       cJSON_SetValuestring(contex->hash_item, hash_str);
       cJSON_SetNumberValue(contex->status_item, MODIFIED);
     }
@@ -52,7 +73,6 @@ int update_new_add(cJSON *json, stage_ctx_t *contex) {
   char root[PATH_MAX];
   if ((out = vls_find_root(root, PATH_MAX)) < 0)
     return out;
-
   char path[PATH_MAX];
   if ((out = vls_join_path(path, PATH_MAX, root, VLS_STAGE_DIR)) < 0)
     return out;
