@@ -4,7 +4,7 @@ project(vls C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_C_EXTENSIONS ON)
 
 enable_testing()
 
@@ -32,7 +32,7 @@ add_library(vls_core STATIC
 
 
 target_include_directories(vls_core PUBLIC include)
-target_compile_definitions(vls_core PUBLIC _POSIX_C_SOURCE=200809L)
+target_compile_definitions(vls_core PUBLIC _POSIX_C_SOURCE=200809L _XOPEN_SOURCE=700)
 target_link_libraries(vls_core PUBLIC OpenSSL::Crypto cjson)
 
 add_executable(vls
