@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Smoke test: init → add → status. Each step must exit 0 and leave the
+# repository in the expected on-disk shape.
+set -euo pipefail
+
+: "${VLS_BIN:?VLS_BIN must be set to the vls binary path}"
+[[ -x "$VLS_BIN" ]] || { echo "VLS_BIN=$VLS_BIN not executable" >&2; exit 1; }
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+cd "$TMP"
+
+# --- init -------------------------------------------------------------
+"$VLS_BIN" init >/dev/null
+for dir in .vls .vls/commits .vls/objects .vls/stage; do
+  [[ -d "$dir" ]] || { echo "init: directory $dir missing" >&2; exit 1; }
+done
+for file in .vls/head .vls/stage/stage.json; do
+  [[ -f "$file" ]] || { echo "init: file $file missing" >&2; exit 1; }
+done
+
+# --- add --------------------------------------------------------------
+echo "hello" > foo.txt
+"$VLS_BIN" add foo.txt >/dev/null
+
+[[ -s .vls/stage/stage.json ]] \
+  || { echo "add: stage.json is empty" >&2; exit 1; }
+grep -q '"path":"foo.txt"' .vls/stage/stage.json \
+  || { echo "add: foo.txt not in stage.json:" >&2; cat .vls/stage/stage.json >&2; exit 1; }
+grep -q '"hash":"b1946ac92492d2347c6235b4d2611184"' .vls/stage/stage.json \
+  || { echo "add: wrong hash for 'hello\\n':" >&2; cat .vls/stage/stage.json >&2; exit 1; }
+
+# --- status -----------------------------------------------------------
+"$VLS_BIN" status >/dev/null
+
+echo "smoke: OK"
