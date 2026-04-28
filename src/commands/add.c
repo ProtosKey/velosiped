@@ -13,7 +13,7 @@ int execute_add(const char *path, void *ctx) {
     return out;
   }
   vls_raw_green(path);
-  vls_say(" был успешно добавлен");
+  vls_say(" was added to stage");
   return 0;
 }
 
