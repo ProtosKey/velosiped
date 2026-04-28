@@ -56,7 +56,7 @@ static bool advance_status(cJSON *item) {
   file_status_t s = (file_status_t)cJSON_GetNumberValue(status);
   if (s & DELETED)
     return true;
-  if (s & (CREATED | MODIFIED))
+  if (s & (NEW | MODIFIED))
     cJSON_SetNumberValue(status, UNCHANGED);
   return false;
 }
@@ -123,7 +123,8 @@ static int apply_commit(cJSON *json, int stage_dir, int obj_dir) {
 }
 
 int vls_commit_func(const int argc, const char **argv) {
-  if (vls_ensure_dir(VLS_STAGE_DIR) < 0 || vls_ensure_dir(VLS_COMMITS_DIR) < 0)
+  if (vls_ensure_dir(VLS_COMMITS_DIR) < 0 ||
+      vls_ensure_dir(VLS_COMMITS_DIR) < 0)
     return -1;
 
   if (vls_copy_file(VLS_STAGE, VLS_COMMIT, O_CREAT | O_WRONLY | O_TRUNC) < 0)
@@ -137,7 +138,7 @@ int vls_commit_func(const int argc, const char **argv) {
   if (!json)
     return -1;
 
-  int stage_dir = open(VLS_STAGE_DIR, O_RDONLY | O_DIRECTORY);
+  int stage_dir = open(VLS_OBJECTS_DIR, O_RDONLY | O_DIRECTORY);
   int obj_dir = open(VLS_OBJECTS_DIR, O_RDONLY | O_DIRECTORY);
 
   int rc = -1;

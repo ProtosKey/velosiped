@@ -22,6 +22,7 @@ add_library(vls_core STATIC
   src/utils/logger.c
   src/utils/hasher.c
   src/utils/stager.c
+  src/utils/iterator.c
   src/utils/fs.c
   src/commands/init.c
   src/commands/add.c

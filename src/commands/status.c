@@ -1,5 +1,7 @@
 #include "utils/fs.h"
 #include "utils/hasher.h"
+#include "utils/iterator.h"
+#include "utils/logger.h"
 #include "utils/stager.h"
 #include "utils/visitor.h"
 #include "vls_command.h"
@@ -11,44 +13,33 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int check_file(const char *path, void *ctx) {
-  /*
-int out;
-stage_t stage = {path};
-if ((out = check_stage(path, &stage)) < 0) {
-  return out;
-}
-if (stage.status == UNTRACTED) {
-  ((status_t *)ctx)->untracted->next =
-      &(node_t){(void *)&stage, ((status_t *)ctx)->untracted, NULL};
-  ((status_t *)ctx)->untracted = ((status_t *)ctx)->untracted->next;
-} else {
-  if (stage.status == CREATED) {
-    ((status_t *)ctx)->new->next =
-        &(node_t){(void *)&stage, ((status_t *)ctx)->new, NULL};
-    ((status_t *)ctx)->new = ((status_t *)ctx)->new->next;
-  } else if (stage.status == MODIFIED) {
-    ((status_t *)ctx)->modified->next =
-        &(node_t){(void *)&stage, ((status_t *)ctx)->modified, NULL};
-    ((status_t *)ctx)->modified = ((status_t *)ctx)->modified->next;
-  } else if (stage.status == DELETED) {
-    ((status_t *)ctx)->deleted->next =
-        &(node_t){(void *)&stage, ((status_t *)ctx)->deleted, NULL};
-    ((status_t *)ctx)->deleted = ((status_t *)ctx)->deleted->next;
-  } else if (stage.status == UNCHANGED) {
-    ((status_t *)ctx)->old->next =
-        &(node_t){(void *)&stage, ((status_t *)ctx)->old, NULL};
-    ((status_t *)ctx)->old = ((status_t *)ctx)->old->next;
+int check_file(const char *path, void *ctx) { return 0; }
+
+int collect_status(stage_ctx_t *contex, void *result) {
+  int status = contex->status_item->valueint;
+  if (status & NEW) {
+    ((status_t *)result)->staged_new =
+        add_next(((status_t *)result)->staged_new, (void *)contex->path);
+  } else if (status & MODIFIED) {
+    ((status_t *)result)->staged_modified =
+        add_next(((status_t *)result)->staged_modified, (void *)contex->path);
   }
-  vls_md_hash_t new_hash;
-  if ((out = hash_my_path(path, &new_hash)) < 0) {
+
+  int out;
+  vls_md_hash_t hash_old = {};
+  if ((out = hash_from_string(contex->hash_item->string, &hash_old)) < 0)
     return out;
+
+  if (!memcmp(hash_old.bytes, contex->hash_new->bytes, MD_SIZE)) {
+    ((status_t *)result)->modified =
+        add_next(((status_t *)result)->modified, (void *)contex->path);
   }
-  if (!memcmp(stage.hash.bytes, new_hash.bytes, MD_SIZE)) {
-    ctx
-  }
-}
- */
+
+  return 0;
+};
+
+int output(void *data, void *) {
+  vls_say((char *)data);
   return 0;
 }
 
@@ -60,6 +51,10 @@ int vls_status_funct(const int, const char **) {
   }
 
   status_t status = {};
+  check_stages(collect_status, (void *)&status);
+  iterate(output, status.staged_new, NULL);
+  iterate(output, status.staged_modified, NULL);
+
   if ((out = walk_dir(check_file, root, (void *)&status)) < 0) {
     return out;
   }
