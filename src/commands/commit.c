@@ -19,8 +19,7 @@ static int parse_stage_entry(const cJSON *item, stage_t *out) {
   const cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
   const cJSON *hash = cJSON_GetObjectItemCaseSensitive(item, "hash");
 
-  if (!cJSON_IsString(path) || !cJSON_IsNumber(status) ||
-      !cJSON_IsString(hash))
+  if (!cJSON_IsString(path) || !cJSON_IsNumber(status) || !cJSON_IsString(hash))
     return -1;
 
   out->path = path->valuestring;
@@ -52,7 +51,6 @@ static int copy_blob_to_objects(const stage_t *entry, int stage_dir,
   return rc;
 }
 
-// CREATED/MODIFIED → UNCHANGED. Returns true if the entry should be removed.
 static bool advance_status(cJSON *item) {
   cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
   file_status_t s = (file_status_t)cJSON_GetNumberValue(status);
@@ -125,8 +123,7 @@ static int apply_commit(cJSON *json, int stage_dir, int obj_dir) {
 }
 
 int vls_commit_func(const int argc, const char **argv) {
-  if (vls_ensure_dir(VLS_STAGE_DIR) < 0 ||
-      vls_ensure_dir(VLS_COMMITS_DIR) < 0)
+  if (vls_ensure_dir(VLS_STAGE_DIR) < 0 || vls_ensure_dir(VLS_COMMITS_DIR) < 0)
     return -1;
 
   if (vls_copy_file(VLS_STAGE, VLS_COMMIT, O_CREAT | O_WRONLY | O_TRUNC) < 0)
