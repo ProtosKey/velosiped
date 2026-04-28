@@ -27,7 +27,7 @@ int collect_status(stage_ctx_t *contex, void *result) {
 
   int out;
   vls_md_hash_t hash_old = {};
-  if ((out = hash_from_string(contex->hash_item->string, &hash_old)) < 0)
+  if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0)
     return out;
 
   if (!memcmp(hash_old.bytes, contex->hash_new->bytes, MD_SIZE)) {
@@ -38,8 +38,19 @@ int collect_status(stage_ctx_t *contex, void *result) {
   return 0;
 };
 
-int output(void *data, void *) {
+typedef struct {
+  const char *color;
+  const char *type;
+} output_status_t;
+
+int output(void *data, void *pre) {
+  vls_raw(CLR_BOLD);
+  vls_raw(((output_status_t *)pre)->color);
+  vls_raw("\t");
+  vls_raw(((output_status_t *)pre)->type);
+  vls_raw("\t");
   vls_say((char *)data);
+  vls_raw(CLR_RESET);
   return 0;
 }
 
@@ -52,8 +63,14 @@ int vls_status_funct(const int, const char **) {
 
   status_t status = {};
   check_stages(collect_status, (void *)&status);
-  iterate(output, status.staged_new, NULL);
-  iterate(output, status.staged_modified, NULL);
+
+  vls_say("Changes to be committed:");
+  iterate(output, status.staged_new,
+          &(output_status_t){CLR_GREEN, "new file:"});
+
+  vls_raw("\n");
+  iterate(output, status.staged_modified,
+          &(output_status_t){CLR_CYAN, "modified:"});
 
   if ((out = walk_dir(check_file, root, (void *)&status)) < 0) {
     return out;
