@@ -36,7 +36,7 @@ int update_add(cJSON *json, stage_ctx_t *contex) {
       if ((out = vls_find_root(root, PATH_MAX)) < 0)
         return out;
       char path[PATH_MAX];
-      if ((out = vls_join_path(path, PATH_MAX, root, VLS_STAGE_DIR)) < 0)
+      if ((out = vls_join_path(path, PATH_MAX, root, VLS_OBJECTS_DIR)) < 0)
         return out;
       char file_path_new[PATH_MAX];
       if ((out = vls_join_path(file_path_new, PATH_MAX, path, hash_str)) < 0)
@@ -74,7 +74,7 @@ int update_new_add(cJSON *json, stage_ctx_t *contex) {
   if ((out = vls_find_root(root, PATH_MAX)) < 0)
     return out;
   char path[PATH_MAX];
-  if ((out = vls_join_path(path, PATH_MAX, root, VLS_STAGE_DIR)) < 0)
+  if ((out = vls_join_path(path, PATH_MAX, root, VLS_OBJECTS_DIR)) < 0)
     return out;
   char file_path[PATH_MAX];
   if ((out = vls_join_path(file_path, PATH_MAX, path, hash_str)) < 0)

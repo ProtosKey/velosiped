@@ -10,8 +10,7 @@
 #include <unistd.h>
 
 int vls_init_func(const int, const char **) {
-  const char *dirs[] = {VLS_DIR, VLS_COMMITS_DIR, VLS_OBJECTS_DIR,
-                        VLS_STAGE_DIR};
+  const char *dirs[] = {VLS_DIR, VLS_COMMITS_DIR, VLS_OBJECTS_DIR};
   for (size_t i = 0; i < sizeof(dirs) / sizeof(*dirs); i++) {
     int code = vls_ensure_dir(dirs[i]);
     if (code != 0)
