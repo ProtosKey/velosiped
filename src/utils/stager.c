@@ -2,7 +2,6 @@
 #include "utils/fs.h"
 #include "utils/hasher.h"
 #include "utils/input_output.h"
-#include "utils/iterator.h"
 #include "utils/logger.h"
 #include "vls_paths.h"
 #include "vls_types.h"
