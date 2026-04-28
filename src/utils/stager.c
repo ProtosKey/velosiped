@@ -1,4 +1,5 @@
 #include "utils/stager.h"
+#include "utils/fs.h"
 #include "utils/hasher.h"
 #include "utils/input_output.h"
 #include "utils/logger.h"
@@ -7,6 +8,7 @@
 #include <cjson/cJSON.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -85,9 +87,12 @@ int execute_action(const char *path, const stage_ops_t *action,
                    stage_ctx_t *ctx) {
   int fd = 0;
   int out = -1;
-  if ((fd = open(VLS_STAGE, O_RDONLY)) < 0) {
+  char root[PATH_MAX];
+  if ((out = vls_find_root(root, PATH_MAX)) < 0)
+    return -1;
+  vls_join_path(root, PATH_MAX, root, VLS_STAGE);
+  if ((fd = open(root, O_RDONLY)) < 0)
     return vls_report_errno(errno);
-  };
 
   struct stat file;
   if (fstat(fd, &file) < 0) {
@@ -164,6 +169,8 @@ int execute_action(const char *path, const stage_ops_t *action,
       json = cJSON_CreateArray();
     }
     if (need_new) {
+      ctx->hash_new = &hash_new;
+      ctx->path = path;
       if ((out = action->on_not_found(json, ctx)) < 0) {
         close(fd);
         cJSON_Delete(json);

@@ -20,7 +20,7 @@ typedef struct {
   const char *name;
 } object_t;
 
-typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED } file_status_t;
+typedef enum { CREATED, MODIFIED, DELETED, UNCHANGED, UNTRACTED } file_status_t;
 
 typedef struct commit_node {
   struct commit_node *parent;
@@ -30,9 +30,9 @@ typedef struct commit_node {
 } commit_t;
 
 typedef struct {
-  const file_status_t *status;
   const char *path;
-  const vls_md_hash_t hash;
+  file_status_t status;
+  vls_md_hash_t hash;
 } stage_t;
 
 typedef struct {
@@ -59,10 +59,11 @@ typedef struct node_t {
 
 typedef struct {
   cJSON *json;
-  const node_t *untracted;
-  const node_t *new;
-  const node_t *deleted;
-  const node_t *modified;
+  node_t *untracted;
+  node_t *new;
+  node_t *deleted;
+  node_t *modified;
+  node_t *old;
 } status_t;
 
 #endif
