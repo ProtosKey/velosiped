@@ -12,10 +12,10 @@ cd "$TMP"
 
 # --- init -------------------------------------------------------------
 "$VLS_BIN" init >/dev/null
-for dir in .vls .vls/commits .vls/objects .vls/stage; do
+for dir in .vls .vls/commits .vls/objects; do
   [[ -d "$dir" ]] || { echo "init: directory $dir missing" >&2; exit 1; }
 done
-for file in .vls/head .vls/stage/stage.json; do
+for file in .vls/head .vls/stage.json; do
   [[ -f "$file" ]] || { echo "init: file $file missing" >&2; exit 1; }
 done
 
@@ -23,12 +23,12 @@ done
 echo "hello" > foo.txt
 "$VLS_BIN" add foo.txt >/dev/null
 
-[[ -s .vls/stage/stage.json ]] \
+[[ -s .vls/stage.json ]] \
   || { echo "add: stage.json is empty" >&2; exit 1; }
-grep -q '"path":"foo.txt"' .vls/stage/stage.json \
-  || { echo "add: foo.txt not in stage.json:" >&2; cat .vls/stage/stage.json >&2; exit 1; }
-grep -q '"hash":"b1946ac92492d2347c6235b4d2611184"' .vls/stage/stage.json \
-  || { echo "add: wrong hash for 'hello\\n':" >&2; cat .vls/stage/stage.json >&2; exit 1; }
+grep -q '"path":"foo.txt"' .vls/stage.json \
+  || { echo "add: foo.txt not in stage.json:" >&2; cat .vls/stage.json >&2; exit 1; }
+grep -q '"hash":"b1946ac92492d2347c6235b4d2611184"' .vls/stage.json \
+  || { echo "add: wrong hash for 'hello\\n':" >&2; cat .vls/stage.json >&2; exit 1; }
 
 # --- status -----------------------------------------------------------
 "$VLS_BIN" status >/dev/null
