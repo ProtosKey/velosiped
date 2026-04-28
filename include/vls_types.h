@@ -36,7 +36,6 @@ typedef enum {
 
 typedef struct commit_node {
   struct commit_node *prev;
-  struct commit_node *next;
   time_t created_time;
   vls_md_hash_t hash;
   const char *msg;

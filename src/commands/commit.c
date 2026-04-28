@@ -20,7 +20,6 @@
 #define VLS_FILES(X)                                                           \
   X(hash)                                                                      \
   X(msg)                                                                       \
-  X(next)                                                                      \
   X(prev)                                                                      \
   X(time)
 
@@ -183,7 +182,6 @@ int vls_commit_func(const int argc, const char **argv) {
 
   commit_t self = {
       .prev = has_parent ? &parent : NULL,
-      .next = NULL,
       .created_time = time(NULL),
       .hash = commit_hash,
       .msg = (argc > 0 && argv[0]) ? argv[0] : "",
