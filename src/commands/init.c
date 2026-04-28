@@ -18,13 +18,15 @@ int vls_init_func(const int, const char **) {
       return code;
   }
 
-  const char *name = VLS_HEAD_FILE;
-  int fd = open(name, O_WRONLY | O_CREAT | O_EXCL,
-                S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if (fd < 0 && errno != EEXIST) {
-    return vls_report_errno_at(name, errno);
+  const char *files[] = {VLS_HEAD_FILE, VLS_STAGE};
+  for (size_t i = 0; i < sizeof(files) / sizeof(*files); i++) {
+    int fd = open(files[i], O_WRONLY | O_CREAT | O_EXCL,
+                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (fd < 0 && errno != EEXIST) {
+      return vls_report_errno_at(files[i], errno);
+    }
+    close(fd);
   }
-  close(fd);
 
   char path[PATH_MAX];
   vls_raw("Repository was Successfully initialized");
