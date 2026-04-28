@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Smoke test: init → add → status. Each step must exit 0 and leave the
-# repository in the expected on-disk shape.
+# Smoke test: init → add → status → commit. Each step must exit 0 and leave
+# the repository in the expected on-disk shape.
 set -euo pipefail
 
 : "${VLS_BIN:?VLS_BIN must be set to the vls binary path}"
@@ -32,5 +32,15 @@ grep -q '"hash":"b1946ac92492d2347c6235b4d2611184"' .vls/stage/stage.json \
 
 # --- status -----------------------------------------------------------
 "$VLS_BIN" status >/dev/null
+
+# --- commit -----------------------------------------------------------
+HASH="b1946ac92492d2347c6235b4d2611184"
+
+"$VLS_BIN" commit >/dev/null
+
+[[ -f ".vls/objects/$HASH" ]] \
+  || { echo "commit: blob .vls/objects/$HASH missing" >&2; ls -la .vls/objects >&2; exit 1; }
+diff -q foo.txt ".vls/objects/$HASH" >/dev/null \
+  || { echo "commit: blob content differs from foo.txt" >&2; exit 1; }
 
 echo "smoke: OK"
