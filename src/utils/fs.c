@@ -43,11 +43,15 @@ vls_ensure_file(const char *path, int oflag, ...) {
 int vls_join_path(char *out, size_t cap, const char *dir, const char *name) {
   size_t dlen = strlen(dir);
   const char *sep = (dlen > 0 && dir[dlen - 1] != '/') ? "/" : "";
-  int n = snprintf(out, cap, "%s%s%s", dir, sep, name);
-  if (n < 0 || (size_t)n >= cap) {
+  size_t slen = strlen(sep);
+  size_t nlen = strlen(name);
+  if (dlen + slen + nlen + 1 > cap) {
     errno = ENAMETOOLONG;
     return -1;
   }
+  memmove(out, dir, dlen);
+  memcpy(out + dlen, sep, slen);
+  memcpy(out + dlen + slen, name, nlen + 1);
   return 0;
 }
 
