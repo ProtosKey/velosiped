@@ -2,54 +2,26 @@
 #include "utils/hasher.h"
 #include "utils/input_output.h"
 #include "utils/logger.h"
+#include "utils/time.h"
 #include "vls_paths.h"
 #include "vls_types.h"
 #include <cjson/cJSON.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
-static int parse_stage_entry(const cJSON *item, stage_t *out) {
-  const cJSON *path = cJSON_GetObjectItemCaseSensitive(item, "path");
-  const cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
-  const cJSON *hash = cJSON_GetObjectItemCaseSensitive(item, "hash");
-
-  if (!cJSON_IsString(path) || !cJSON_IsNumber(status) || !cJSON_IsString(hash))
-    return -1;
-
-  out->path = path->valuestring;
-  out->status = (file_status_t)cJSON_GetNumberValue(status);
-  return hash_from_string(hash->valuestring, &out->hash);
-}
-
-static int copy_blob_to_objects(const stage_t *entry, int stage_dir,
-                                int obj_dir) {
-  if (entry->status & (DELETED | UNTRACTED))
-    return 0;
-
-  char hash_str[33];
-  hash_to_string(&entry->hash, hash_str);
-
-  int src_fd = openat(stage_dir, hash_str, O_RDONLY);
-  int dst_fd = openat(obj_dir, hash_str, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-  if (src_fd < 0 || dst_fd < 0) {
-    if (src_fd >= 0)
-      close(src_fd);
-    if (dst_fd >= 0)
-      close(dst_fd);
-    return -1;
-  }
-
-  int rc = vls_safety_copy(src_fd, dst_fd);
-  close(src_fd);
-  close(dst_fd);
-  return rc;
-}
+#define VLS_FILES(X)                                                           \
+  X(hash)                                                                      \
+  X(msg)                                                                       \
+  X(prev)                                                                      \
+  X(time)
 
 static bool advance_status(cJSON *item) {
   cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
@@ -101,33 +73,123 @@ static int save_stage_json(const cJSON *json) {
   return rc;
 }
 
-static int apply_commit(cJSON *json, int stage_dir, int obj_dir) {
+static void update_stage_statuses(cJSON *json) {
   cJSON *item = json->child;
   while (item) {
     cJSON *next = item->next;
-
-    stage_t entry;
-    if (parse_stage_entry(item, &entry) < 0)
-      return vls_report("Unexpected error while parsing stage");
-
-    if (copy_blob_to_objects(&entry, stage_dir, obj_dir) < 0)
-      return vls_report_at("dump", "Failed to dump object from stage");
-
     if (advance_status(item)) {
       cJSON_DetachItemViaPointer(json, item);
       cJSON_Delete(item);
     }
     item = next;
   }
-  return 0;
+}
+
+static int read_head_hash(vls_md_hash_t *out) {
+  int fd = open(VLS_HEAD_FILE, O_RDONLY);
+  if (fd < 0)
+    return -1;
+
+  char buf[33] = {0};
+  ssize_t n = read(fd, buf, 32);
+  close(fd);
+  if (n != 32)
+    return -1;
+  return hash_from_string(buf, out);
+}
+
+static int write_head_hash(const vls_md_hash_t *hash) {
+  char hash_str[33];
+  hash_to_string(hash, hash_str);
+
+  int fd = open(VLS_HEAD_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+  if (fd < 0)
+    return vls_report_errno_at(VLS_HEAD_FILE, errno);
+  int rc = vls_safety_write((vls_output_t){fd, hash_str, strlen(hash_str)});
+  close(fd);
+  return rc;
+}
+
+static int save_commit(const commit_t *commit) {
+  char hash_str[33];
+  hash_to_string(&commit->hash, hash_str);
+
+  char commit_path[PATH_MAX];
+  if (vls_join_path(commit_path, PATH_MAX, VLS_COMMITS_DIR, hash_str) < 0)
+    return -1;
+  if (vls_ensure_dir(commit_path) < 0)
+    return -1;
+
+  char commit_json[PATH_MAX];
+  if (vls_join_path(commit_json, PATH_MAX, commit_path, "commit.json") < 0)
+    return -1;
+  if (vls_copy_file(VLS_STAGE, commit_json, O_CREAT | O_WRONLY | O_TRUNC) < 0)
+    return -1;
+
+  int cmt_fd = open(commit_path, O_RDONLY | O_DIRECTORY);
+  if (cmt_fd < 0)
+    return vls_report_errno_at(commit_path, errno);
+
+  int oflag = O_CREAT | O_WRONLY | O_TRUNC;
+  int mod = 0644;
+
+#define INIT(name) int name##_fd = openat(cmt_fd, #name, oflag, mod);
+  VLS_FILES(INIT)
+#undef INIT
+
+  int rc = 0;
+#define CHECK(name)                                                            \
+  if (name##_fd < 0) {                                                         \
+    rc = -1;                                                                   \
+    vls_report_errno_at(#name, errno);                                         \
+    goto cleanup;                                                              \
+  }
+  VLS_FILES(CHECK)
+#undef CHECK
+
+  vls_safety_write((vls_output_t){hash_fd, hash_str, strlen(hash_str)});
+
+  const char *msg = commit->msg ? commit->msg : "";
+  vls_safety_write((vls_output_t){msg_fd, msg, strlen(msg)});
+
+  if (commit->prev) {
+    char prev_str[33];
+    hash_to_string(&commit->prev->hash, prev_str);
+    vls_safety_write((vls_output_t){prev_fd, prev_str, strlen(prev_str)});
+  }
+
+  write_time_to_vls(time_fd);
+
+cleanup:
+#define CLOSE(name) close(name##_fd);
+  VLS_FILES(CLOSE)
+#undef CLOSE
+
+  close(cmt_fd);
+  return rc;
 }
 
 int vls_commit_func(const int argc, const char **argv) {
-  if (vls_ensure_dir(VLS_COMMITS_DIR) < 0 ||
-      vls_ensure_dir(VLS_COMMITS_DIR) < 0)
+  if (vls_ensure_dir(VLS_COMMITS_DIR) < 0)
     return -1;
 
-  if (vls_copy_file(VLS_STAGE, VLS_COMMIT, O_CREAT | O_WRONLY | O_TRUNC) < 0)
+  vls_md_hash_t commit_hash;
+  if (hash_my_path(VLS_STAGE, &commit_hash) < 0)
+    return -1;
+
+  commit_t parent = {0};
+  bool has_parent = (read_head_hash(&parent.hash) == 0);
+
+  commit_t self = {
+      .prev = has_parent ? &parent : NULL,
+      .created_time = time(NULL),
+      .hash = commit_hash,
+      .msg = (argc > 0 && argv[0]) ? argv[0] : "",
+  };
+
+  if (save_commit(&self) < 0)
+    return -1;
+  if (write_head_hash(&commit_hash) < 0)
     return -1;
 
   int fd = vls_ensure_file(VLS_STAGE, O_RDONLY);
@@ -138,22 +200,9 @@ int vls_commit_func(const int argc, const char **argv) {
   if (!json)
     return -1;
 
-  int stage_dir = open(VLS_OBJECTS_DIR, O_RDONLY | O_DIRECTORY);
-  int obj_dir = open(VLS_OBJECTS_DIR, O_RDONLY | O_DIRECTORY);
-
-  int rc = -1;
-  if (stage_dir < 0 || obj_dir < 0) {
-    vls_report_errno(errno);
-  } else {
-    rc = apply_commit(json, stage_dir, obj_dir);
-    if (rc == 0)
-      rc = save_stage_json(json);
-  }
-
-  if (stage_dir >= 0)
-    close(stage_dir);
-  if (obj_dir >= 0)
-    close(obj_dir);
+  update_stage_statuses(json);
+  int rc = save_stage_json(json);
   cJSON_Delete(json);
+
   return rc < 0 ? -1 : 0;
 }

@@ -24,12 +24,14 @@ add_library(vls_core STATIC
   src/utils/stager.c
   src/utils/iterator.c
   src/utils/fs.c
+  src/utils/time.c
   src/commands/init.c
   src/commands/add.c
   src/commands/commit.c
   src/commands/help.c
   src/commands/reset.c
-  src/commands/status.c)
+  src/commands/status.c
+  )
 
 
 target_include_directories(vls_core PUBLIC include)
