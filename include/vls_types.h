@@ -9,6 +9,12 @@ typedef struct {
 } vls_md_hash_t;
 
 typedef struct {
+  const int fd;
+  const char *message;
+  const size_t size;
+} vls_output_t;
+
+typedef struct {
   const char *command_name;
   const char *description;
   int (*call)(const int, const char **);
@@ -29,9 +35,10 @@ typedef enum {
 } file_status_t;
 
 typedef struct commit_node {
-  struct commit_node *parent;
-  struct commit_node *child;
+  struct commit_node *prev;
+  struct commit_node *next;
   time_t created_time;
+  vls_md_hash_t hash;
   const char *msg;
 } commit_t;
 
