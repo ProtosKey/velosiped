@@ -47,6 +47,22 @@ int update_new_add(cJSON *json, stage_ctx_t *contex) {
   cJSON_AddStringToObject(stage, hash_name, hash_str);
   cJSON_AddNumberToObject(stage, status_name, CREATED);
   cJSON_AddItemToArray(json, stage);
+
+  int out;
+  char root[PATH_MAX];
+  if ((out = vls_find_root(root, PATH_MAX)) < 0)
+    return out;
+
+  char path[PATH_MAX];
+  if ((out = vls_join_path(path, PATH_MAX, root, VLS_STAGE_DIR)) < 0)
+    return out;
+  char file_path[PATH_MAX];
+  if ((out = vls_join_path(file_path, PATH_MAX, path, hash_str)) < 0)
+    return out;
+
+  if ((out = vls_copy_file(contex->abs_path, file_path,
+                           O_CREAT | O_TRUNC | O_WRONLY)) < 0)
+    return out;
   return 0;
 }
 

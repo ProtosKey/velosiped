@@ -61,7 +61,7 @@ int vls_copy_file(const char *src, const char *dst, int dst_oflag) {
 
   char cp_buff[BUFFER_SIZE];
   int result =
-      (src_fd == -1 || dst_fd == -1 || vls_safety_copy(src_fd, dst_fd) < 0);
+      -(src_fd == -1 || dst_fd == -1 || vls_safety_copy(src_fd, dst_fd) < 0);
 
   close(src_fd);
   close(dst_fd);
