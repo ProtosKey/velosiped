@@ -2,6 +2,7 @@
 #include "utils/fs.h"
 #include "utils/hasher.h"
 #include "utils/input_output.h"
+#include "utils/iterator.h"
 #include "utils/logger.h"
 #include "vls_paths.h"
 #include "vls_types.h"
@@ -17,7 +18,85 @@
 
 int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
 
-int check_stages() { return 0; }
+cJSON *open_json_file(const char *path) {
+  int fd;
+  if ((fd = open(path, O_RDONLY)) < 0) {
+    vls_report_errno(errno);
+    return NULL;
+  }
+
+  struct stat file;
+  if (fstat(fd, &file) < 0) {
+    goto exit_with_errno;
+  }
+  if (file.st_size > 0) {
+    char *msg_handler = "Unexpected error";
+    if (file.st_size != 0) {
+      char *map = mmap(NULL, file.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+      if (map == MAP_FAILED) {
+        goto exit_with_errno;
+      }
+      cJSON *json;
+      json = cJSON_ParseWithLength(map, file.st_size);
+      if (json && cJSON_IsArray(json)) {
+        close(fd);
+        return json;
+      }
+    }
+  } else {
+    close(fd);
+    return cJSON_CreateArray();
+  }
+exit_with_errno:
+  vls_report_errno(errno);
+  close(fd);
+  return NULL;
+}
+
+int check_stages(collect_data collect, void *ctx) {
+  int out;
+  char root[PATH_MAX];
+  if ((out = vls_find_root(root, PATH_MAX)) < 0)
+    return out;
+  char stage[PATH_MAX];
+  if ((out = vls_join_path(stage, PATH_MAX, root, VLS_STAGE)) < 0)
+    return out;
+  cJSON *json = open_json_file(stage);
+  if (!json)
+    return -1;
+  cJSON *elem;
+  cJSON_ArrayForEach(elem, json) {
+    cJSON *path_check = cJSON_GetObjectItemCaseSensitive(elem, path_name);
+    cJSON *hash_item = cJSON_GetObjectItemCaseSensitive(elem, hash_name);
+    cJSON *status_item = cJSON_GetObjectItemCaseSensitive(elem, status_name);
+
+    if (!(cJSON_IsString(path_check) && path_check->valuestring != NULL))
+      continue;
+    if (!(cJSON_IsString(hash_item) && hash_item->valuestring != NULL))
+      continue;
+    if (!(cJSON_IsNumber(status_item) &&
+          (status_item->valueint < UNTRACTED && status_item > UNCHANGED)))
+      return out;
+
+    char abs_path[PATH_MAX];
+    if ((out = vls_path_from_root(abs_path, PATH_MAX, root,
+                                  path_check->valuestring)) < 0)
+      return out;
+    vls_md_hash_t hash_new;
+    if ((out = hash_my_path(abs_path, &hash_new)) < 0)
+      return out;
+
+    const int status = status_item->valueint;
+    stage_ctx_t context = {};
+    context.hash_item = hash_item;
+    context.hash_new = &hash_new;
+    context.path = path_check->valuestring;
+    context.status_item = status_item;
+    if ((out = collect(&context, ctx)) < 0)
+      return out;
+  }
+  return 0;
+}
 
 int update_add(cJSON *json, stage_ctx_t *contex) {
   int out;
@@ -66,7 +145,7 @@ int update_new_add(cJSON *json, stage_ctx_t *contex) {
   char hash_str[33];
   hash_to_string(contex->hash_new, hash_str);
   cJSON_AddStringToObject(stage, hash_name, hash_str);
-  cJSON_AddNumberToObject(stage, status_name, CREATED);
+  cJSON_AddNumberToObject(stage, status_name, NEW);
   cJSON_AddItemToArray(json, stage);
 
   int out;
@@ -177,7 +256,8 @@ int execute_action(const char *path, const stage_ops_t *action,
         cJSON *status_item =
             cJSON_GetObjectItemCaseSensitive(elem, status_name);
 
-        if (!cJSON_IsString(path_check)) {
+        if (!(cJSON_IsString(path_check) &&
+              (path_check->valuestring) != NULL)) {
           need_json = true;
           break;
         }
