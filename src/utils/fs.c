@@ -103,3 +103,22 @@ int vls_find_root(char *out, size_t cap) {
   }
   return vls_report("Unexpected erron");
 }
+
+int vls_path_from_root(char *out, size_t cap, const char *root,
+                       const char *name) {
+  char real_root[PATH_MAX];
+  char real_name[PATH_MAX];
+
+  if (!realpath(root, real_root))
+    return vls_report_errno(errno);
+  if (!realpath(name, real_name))
+    return vls_report_errno(errno);
+  if (strncmp(real_root, real_name, strlen(real_root)) != 0)
+    return vls_report("No such file in repository");
+
+  const char *start = real_name + strlen(real_root);
+  if (strncpy(out, start, cap) < 0) {
+    return vls_report_errno(errno);
+  }
+  return 0;
+}
