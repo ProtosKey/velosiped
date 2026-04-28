@@ -49,9 +49,9 @@ int vls_join_path(char *out, size_t cap, const char *dir, const char *name) {
     errno = ENAMETOOLONG;
     return -1;
   }
+  memmove(out + dlen + slen, name, nlen + 1);
   memmove(out, dir, dlen);
   memcpy(out + dlen, sep, slen);
-  memcpy(out + dlen + slen, name, nlen + 1);
   return 0;
 }
 
@@ -59,7 +59,6 @@ int vls_copy_file(const char *src, const char *dst, int dst_oflag) {
   int src_fd = vls_ensure_file(src, O_RDONLY);
   int dst_fd = vls_ensure_file(dst, dst_oflag, 0644);
 
-  char cp_buff[BUFFER_SIZE];
   int result =
       -(src_fd == -1 || dst_fd == -1 || vls_safety_copy(src_fd, dst_fd) < 0);
 
