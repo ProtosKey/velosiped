@@ -117,6 +117,8 @@ int vls_path_from_root(char *out, size_t cap, const char *root,
     return vls_report("No such file in repository");
 
   const char *start = real_name + strlen(real_root);
+  if (start[0] == '/')
+    start++;
   if (strncpy(out, start, cap) < 0)
     return vls_report_errno(errno);
   return 0;
@@ -136,7 +138,12 @@ int vls_path_from_you(char *out, size_t cap, char *file) {
   char real_file[PATH_MAX];
   if ((out_f = vls_join_path(real_file, PATH_MAX, real_root, file)) < 0)
     return out_f;
+
   const char *start = real_file + strlen(real_root);
+  if (strncmp(place, real_file, strlen(place)) != 0)
+    return vls_report("No such file in directory");
+  if (start[0] == '/')
+    start++;
   if (strncpy(out, start, cap) < 0)
     return vls_report_errno(errno);
   return 0;

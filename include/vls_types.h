@@ -37,6 +37,7 @@ typedef struct {
 
 typedef struct {
   const char *path;
+  char *abs_path;
   int index;
   bool need_write;
   vls_md_hash_t *hash_new;

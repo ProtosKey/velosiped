@@ -73,7 +73,7 @@ int no_remove(cJSON *json, stage_ctx_t *contex) {
 int remove_stage(const char *path) {
   int out;
   if ((out = execute_action(path, &(stage_ops_t){*remove, *no_remove},
-                            &(stage_ctx_t){path})) < 0) {
+                            &(stage_ctx_t){})) < 0) {
     return out;
   }
   return 0;
@@ -86,9 +86,19 @@ int execute_action(const char *path, const stage_ops_t *action,
   char root[PATH_MAX];
   if ((out = vls_find_root(root, PATH_MAX)) < 0)
     return -1;
-  vls_join_path(root, PATH_MAX, root, VLS_STAGE);
-  if ((fd = open(root, O_RDONLY)) < 0)
+
+  char stage[PATH_MAX];
+  vls_join_path(stage, PATH_MAX, root, VLS_STAGE);
+  if ((fd = open(stage, O_RDONLY)) < 0)
     return vls_report_errno(errno);
+
+  char real_path[PATH_MAX];
+  char abs_path[PATH_MAX];
+
+  if ((out = vls_path_from_root(real_path, PATH_MAX, root, path)) < 0)
+    return out;
+  if ((out = vls_join_path(abs_path, PATH_MAX, root, real_path)) < 0)
+    return out;
 
   struct stat file;
   if (fstat(fd, &file) < 0) {
@@ -97,10 +107,14 @@ int execute_action(const char *path, const stage_ops_t *action,
   }
 
   vls_md_hash_t hash_new;
-  if ((out = hash_my_path(path, &hash_new)) < 0) {
+  if ((out = hash_my_path(abs_path, &hash_new)) < 0) {
     close(fd);
     return out;
   }
+
+  ctx->hash_new = &hash_new;
+  ctx->path = real_path;
+  ctx->abs_path = abs_path;
 
   cJSON *json = NULL;
   bool need_new = true;
@@ -137,13 +151,12 @@ int execute_action(const char *path, const stage_ops_t *action,
           break;
         }
 
-        if (strcmp(path, path_check->valuestring) == 0) {
+        if (strcmp(real_path, path_check->valuestring) == 0) {
           need_new = false;
           ctx->index = i;
           ctx->need_write = need_write;
           ctx->hash_item = hash_item;
           ctx->status_item = status_item;
-          ctx->hash_new = &hash_new;
           if ((out = action->on_found(json, ctx)) < 0) {
             close(fd);
             cJSON_Delete(json);
@@ -165,8 +178,6 @@ int execute_action(const char *path, const stage_ops_t *action,
       json = cJSON_CreateArray();
     }
     if (need_new) {
-      ctx->hash_new = &hash_new;
-      ctx->path = path;
       if ((out = action->on_not_found(json, ctx)) < 0) {
         close(fd);
         cJSON_Delete(json);
