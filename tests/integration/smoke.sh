@@ -131,4 +131,38 @@ grep -q '"path":"junk.txt"' .vls/stage.json \
 grep -q '"path":"junk.txt"' .vls/stage.json \
   && { echo "drop: junk.txt still in stage.json:" >&2; cat .vls/stage.json >&2; exit 1; } || true
 
+# --- regression: post-reset re-add must not collide with old commit ----
+# Scenario: commit a file, delete it, commit, reset to first, reset to
+# second (file lingers on disk but is absent from the index), re-add it,
+# commit. The new commit's stage state happens to match the first commit's
+# byte-for-byte; the commit hash must still differ so the prev-chain stays
+# acyclic and `log` terminates.
+REGRESSION_DIR="$(mktemp -d)"
+(
+  cd "$REGRESSION_DIR"
+  "$VLS_BIN" init >/dev/null
+  echo hello > F
+  "$VLS_BIN" add F >/dev/null
+  "$VLS_BIN" commit first >/dev/null
+  R1="$(cat .vls/head)"
+  rm F
+  "$VLS_BIN" commit second >/dev/null
+  R2="$(cat .vls/head)"
+  "$VLS_BIN" reset "$R1" >/dev/null
+  "$VLS_BIN" reset "$R2" >/dev/null
+  "$VLS_BIN" add F >/dev/null
+  "$VLS_BIN" commit third >/dev/null
+  R3="$(cat .vls/head)"
+
+  [[ "$R3" != "$R1" && "$R3" != "$R2" ]] \
+    || { echo "regression: third commit collided with an ancestor (R1=$R1 R2=$R2 R3=$R3)" >&2; exit 1; }
+
+  LOG_OUT="$(timeout 3 "$VLS_BIN" log)" \
+    || { echo "regression: 'vls log' did not terminate or failed" >&2; exit 1; }
+  N="$(printf '%s\n' "$LOG_OUT" | grep -c '^commit ')"
+  [[ "$N" -eq 3 ]] \
+    || { echo "regression: expected 3 commits in log, got $N" >&2; printf '%s\n' "$LOG_OUT" >&2; exit 1; }
+)
+rm -rf "$REGRESSION_DIR"
+
 echo "smoke: OK"
