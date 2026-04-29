@@ -1,4 +1,5 @@
 #include "utils/input_output.h"
+#include "utils/iterator.h"
 #include "utils/logger.h"
 #include <errno.h>
 #include <string.h>
@@ -34,4 +35,10 @@ int vls_safety_copy(int in, int out) {
       return -1;
   }
   return 0;
+}
+
+bool isClear(node_t *list) {
+  if (!list)
+    return true;
+  return false;
 }

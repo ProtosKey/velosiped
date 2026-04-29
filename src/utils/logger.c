@@ -13,7 +13,7 @@ static void write_stdout(const char *s, size_t n) {
 
 static void prepare_error() {
   write_stderr(CLR_RED, strlen(CLR_RED));
-  write_stderr("\t[Error]\t", 9);
+  write_stderr("[Error]\t", 9);
   write_stderr(CLR_RESET, strlen(CLR_RESET));
 }
 
@@ -45,28 +45,32 @@ int vls_say_green(const char *msg) {
   return 0;
 }
 
-int vls_report(const char *msg) {
-  prepare_error();
+static int vls_report_no_label(const char *msg) {
   write_stderr(msg, strlen(msg));
   write_stderr("\n", 1);
   return -1;
+}
+
+int vls_report(const char *msg) {
+  prepare_error();
+  return vls_report_no_label(msg);
 }
 
 int vls_report_at(const char *ctx, const char *msg) {
   prepare_error();
   write_stderr(ctx, strlen(ctx));
   write_stderr(": ", 2);
-  return vls_report(msg);
+  return vls_report_no_label(msg);
 }
 
 int vls_report_errno(int err) {
   prepare_error();
-  return vls_report(strerror(err));
+  return vls_report_no_label(strerror(err));
 }
 
 int vls_report_errno_at(const char *ctx, int err) {
   prepare_error();
   write_stderr(ctx, strlen(ctx));
   write_stderr(": ", 2);
-  return vls_report(strerror(err));
+  return vls_report_no_label(strerror(err));
 }

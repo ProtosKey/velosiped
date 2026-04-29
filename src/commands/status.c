@@ -9,6 +9,8 @@
 #include <dirent.h>
 #include <limits.h>
 #include <openssl/asn1.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -30,7 +32,7 @@ int collect_status(stage_ctx_t *contex, void *result) {
   if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0)
     return out;
 
-  if (!memcmp(hash_old.bytes, contex->hash_new->bytes, MD_SIZE)) {
+  if (memcmp(hash_old.bytes, contex->hash_new->bytes, MD_SIZE) != 0) {
     ((status_t *)result)->modified =
         add_next(((status_t *)result)->modified, (void *)contex->path);
   }
@@ -64,17 +66,33 @@ int vls_status_funct(const int, const char **) {
   status_t status = {};
   check_stages(collect_status, (void *)&status);
 
-  vls_say("Changes to be committed:");
-  iterate(output, status.staged_new,
-          &(output_status_t){CLR_GREEN, "new file:"});
+  bool is_new = false;
+  if (!isClear(status.staged_new) || !isClear(status.staged_modified)) {
+    vls_say("Changes to be committed:");
+    if (!isClear(status.staged_new)) {
+      iterate(output, status.staged_new,
+              &(output_status_t){CLR_GREEN, "new file:"});
+      list_free(status.staged_new, false);
+      is_new = true;
+    }
 
-  vls_raw("\n");
-  iterate(output, status.staged_modified,
-          &(output_status_t){CLR_CYAN, "modified:"});
-
-  vls_raw("\n");
-  iterate(output, status.staged_modified,
-          &(output_status_t){CLR_CYAN, "modified:"});
+    if (!isClear(status.staged_modified)) {
+      iterate(output, status.staged_modified,
+              &(output_status_t){CLR_GREEN, "modified:"});
+      list_free(status.staged_modified, false);
+      is_new = true;
+    }
+  }
+  if (!isClear(status.modified)) {
+    if (is_new)
+      vls_raw("\n");
+    vls_say("Changes to be added:");
+    iterate(output, status.modified, &(output_status_t){CLR_CYAN, "modified:"});
+    list_free(status.modified, false);
+    is_new = true;
+  } else {
+    vls_say("You working branch is free");
+  }
 
   if ((out = walk_dir(check_file, root, (void *)&status)) < 0) {
     return out;
