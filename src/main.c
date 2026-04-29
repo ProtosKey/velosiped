@@ -9,7 +9,8 @@
   X(add)                                                                       \
   X(reset)                                                                     \
   X(status)                                                                    \
-  X(log)
+  X(log)                                                                       \
+  X(drop)
 
 static inline const char *extract_command_name(int *argc, const char ***argv) {
   *argc -= 1;

@@ -11,6 +11,7 @@ int vls_reset_func(const int, const char **);
 int vls_help_func(const int, const char **);
 int vls_status_func(const int, const char **);
 int vls_log_func(const int, const char **);
+int vls_drop_func(const int, const char **);
 
 extern command_t vls_init;
 extern command_t vls_add;
@@ -19,5 +20,6 @@ extern command_t vls_reset;
 extern command_t vls_help;
 extern command_t vls_status;
 extern command_t vls_log;
+extern command_t vls_drop;
 
 #endif
