@@ -2,6 +2,7 @@
 #include "vls_types.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 node_t *add_next(node_t *list, void *data) {
   node_t *next = malloc(sizeof(node_t));
@@ -12,6 +13,7 @@ node_t *add_next(node_t *list, void *data) {
     list->next = next;
     next->prev = list;
   }
+  next->next = NULL;
   next->data = data;
   return next;
 }

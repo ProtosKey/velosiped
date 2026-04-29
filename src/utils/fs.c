@@ -123,7 +123,7 @@ int vls_path_from_root(char *out, size_t cap, const char *root,
   return 0;
 }
 
-int vls_path_from_you(char *out, size_t cap, char *file) {
+int vls_check_path_from_you(char *out, size_t cap, const char *file) {
   char place[PATH_MAX];
   if (!getcwd(place, PATH_MAX))
     return vls_report_errno(errno);
@@ -138,11 +138,16 @@ int vls_path_from_you(char *out, size_t cap, char *file) {
   if ((out_f = vls_join_path(real_file, PATH_MAX, real_root, file)) < 0)
     return out_f;
 
-  const char *start = real_file + strlen(real_root);
+  const char *start = real_file + strlen(place);
   if (strncmp(place, real_file, strlen(place)) != 0)
     return vls_report("No such file in directory");
   if (start[0] == '/')
     start++;
+
+  struct stat stat_file;
+  if (stat(start, &stat_file) < 0)
+    return 1;
+
   if (strncpy(out, start, cap) < 0)
     return vls_report_errno(errno);
   return 0;

@@ -77,18 +77,8 @@ int check_stages(collect_data collect, void *ctx) {
           (status_item->valueint < UNTRACTED && status_item > UNCHANGED)))
       return out;
 
-    char abs_path[PATH_MAX];
-    if ((out = vls_path_from_root(abs_path, PATH_MAX, root,
-                                  path_check->valuestring)) < 0)
-      return out;
-    vls_md_hash_t hash_new;
-    if ((out = hash_my_path(abs_path, &hash_new)) < 0)
-      return out;
-
-    const int status = status_item->valueint;
     stage_ctx_t context = {};
     context.hash_item = hash_item;
-    context.hash_new = &hash_new;
     context.path = path_check->valuestring;
     context.status_item = status_item;
     if ((out = collect(&context, ctx)) < 0)

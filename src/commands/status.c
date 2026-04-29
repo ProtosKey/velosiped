@@ -18,27 +18,41 @@
 int check_file(const char *path, void *ctx) { return 0; }
 
 int collect_status(stage_ctx_t *contex, void *result) {
-  int status = contex->status_item->valueint;
-  if (status & NEW) {
-    ((status_t *)result)->staged_new =
-        add_next(((status_t *)result)->staged_new, (void *)contex->path);
-  } else if (status & MODIFIED) {
-    ((status_t *)result)->staged_modified =
-        add_next(((status_t *)result)->staged_modified, (void *)contex->path);
-  }
-
   int out;
-  vls_md_hash_t hash_old = {};
-  if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0)
+  char root[PATH_MAX];
+  if ((out = vls_find_root(root, PATH_MAX)) < 0)
     return out;
+  char abs_path[PATH_MAX];
+  if ((out = vls_check_path_from_you(abs_path, PATH_MAX, contex->path)) < 0) {
+    return out;
+  } else if (out == 1) {
+    ((status_t *)result)->deleted =
+        add_next(((status_t *)result)->deleted, (void *)contex->path);
+  } else {
+    vls_md_hash_t hash_new;
+    if ((out = hash_my_path(abs_path, &hash_new)) < 0)
+      return out;
 
-  if (memcmp(hash_old.bytes, contex->hash_new->bytes, MD_SIZE) != 0) {
-    ((status_t *)result)->modified =
-        add_next(((status_t *)result)->modified, (void *)contex->path);
+    int status = contex->status_item->valueint;
+    if (status & NEW) {
+      ((status_t *)result)->staged_new =
+          add_next(((status_t *)result)->staged_new, (void *)contex->path);
+    } else if (status & MODIFIED) {
+      ((status_t *)result)->staged_modified =
+          add_next(((status_t *)result)->staged_modified, (void *)contex->path);
+    }
+    vls_md_hash_t hash_old = {};
+    if ((out = hash_from_string(contex->hash_item->valuestring, &hash_old)) < 0)
+      return out;
+
+    if (memcmp(hash_old.bytes, hash_new.bytes, MD_SIZE) != 0) {
+      ((status_t *)result)->modified =
+          add_next(((status_t *)result)->modified, (void *)contex->path);
+    }
   }
 
   return 0;
-};
+}
 
 typedef struct {
   const char *color;
@@ -64,10 +78,12 @@ int vls_status_func(const int, const char **) {
   }
 
   status_t status = {};
-  check_stages(collect_status, (void *)&status);
+  if ((out = check_stages(collect_status, (void *)&status)) < 0)
+    return out;
 
   bool is_clear = true;
   bool is_new = false;
+
   if (!isClear(status.staged_new) || !isClear(status.staged_modified)) {
     is_clear = false;
     vls_say("Changes to be committed:");
@@ -87,11 +103,24 @@ int vls_status_func(const int, const char **) {
   }
   if (!isClear(status.modified)) {
     is_clear = true;
-    if (is_new)
+    if (is_new) {
       vls_raw("\n");
+      is_new = false;
+    }
     vls_say("Changes to be added:");
     iterate(output, status.modified, &(output_status_t){CLR_CYAN, "modified:"});
     list_free(status.modified, false);
+    is_new = true;
+  }
+  if (!isClear(status.deleted)) {
+    is_clear = false;
+    if (is_new) {
+      vls_raw("\n");
+      is_new = false;
+    }
+    vls_say("Changes to be dropped:");
+    iterate(output, status.deleted, &(output_status_t){CLR_RED, "deleted:"});
+    list_free(status.deleted, false);
     is_new = true;
   }
   if (is_clear) {
