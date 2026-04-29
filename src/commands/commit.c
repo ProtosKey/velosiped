@@ -169,8 +169,44 @@ cleanup:
   return rc;
 }
 
+static int mark_missing_as_deleted(void) {
+  int fd = open(VLS_STAGE, O_RDONLY);
+  if (fd < 0)
+    return vls_report_errno_at(VLS_STAGE, errno);
+
+  cJSON *json = load_stage_json(fd);
+  close(fd);
+  if (!json)
+    return -1;
+
+  bool changed = false;
+  cJSON *item = NULL;
+  cJSON_ArrayForEach(item, json) {
+    cJSON *path = cJSON_GetObjectItemCaseSensitive(item, "path");
+    cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
+    if (!cJSON_IsString(path) || !cJSON_IsNumber(status))
+      continue;
+
+    struct stat st;
+    if (lstat(path->valuestring, &st) < 0 && errno == ENOENT) {
+      file_status_t s = (file_status_t)cJSON_GetNumberValue(status);
+      if (!(s & DELETED)) {
+        cJSON_SetNumberValue(status, DELETED);
+        changed = true;
+      }
+    }
+  }
+
+  int rc = changed ? save_stage_json(json) : 0;
+  cJSON_Delete(json);
+  return rc;
+}
+
 int vls_commit_func(const int argc, const char **argv) {
   if (vls_ensure_dir(VLS_COMMITS_DIR) < 0)
+    return -1;
+
+  if (mark_missing_as_deleted() < 0)
     return -1;
 
   vls_md_hash_t commit_hash;
