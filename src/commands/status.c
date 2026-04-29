@@ -66,8 +66,10 @@ int vls_status_func(const int, const char **) {
   status_t status = {};
   check_stages(collect_status, (void *)&status);
 
+  bool is_clear = true;
   bool is_new = false;
   if (!isClear(status.staged_new) || !isClear(status.staged_modified)) {
+    is_clear = false;
     vls_say("Changes to be committed:");
     if (!isClear(status.staged_new)) {
       iterate(output, status.staged_new,
@@ -84,13 +86,15 @@ int vls_status_func(const int, const char **) {
     }
   }
   if (!isClear(status.modified)) {
+    is_clear = true;
     if (is_new)
       vls_raw("\n");
     vls_say("Changes to be added:");
     iterate(output, status.modified, &(output_status_t){CLR_CYAN, "modified:"});
     list_free(status.modified, false);
     is_new = true;
-  } else {
+  }
+  if (is_clear) {
     vls_say("You working branch is free");
   }
 
