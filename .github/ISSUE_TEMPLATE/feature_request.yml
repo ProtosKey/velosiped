@@ -1,0 +1,43 @@
+name: Feature Request
+description: Предложить новую команду или функциональность
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Перед заполнением посмотри в [README.md → Что работает, что нет](../blob/main/README.md#что-работает-что-нет) — может, фича уже в плане.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему решает
+      description: Что ты хочешь сделать, и почему текущий vls этому мешает или не помогает.
+      placeholder: "Хочу удалять файлы из стейджа, но `vls add` падает на отсутствующих файлах."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предлагаемое поведение
+      description: Как бы ты хотел, чтобы это работало. Желательно с примером CLI.
+      render: shell
+      placeholder: |
+        vls rm foo.txt
+        # помечает foo.txt как DELETED в stage.json
+        vls commit "remove foo"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы
+      description: Что ещё рассматривал (другие команды, флаги, обходные пути).
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Дополнительно
+      description: Ссылки на похожие фичи в других VCS, edge-кейсы, что угодно.

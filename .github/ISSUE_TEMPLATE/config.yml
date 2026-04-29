@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Уязвимость в безопасности
+    url: https://github.com/oriptal/velosiped/blob/main/SECURITY.md
+    about: Не открывай публичный issue. Подробности в SECURITY.md — пиши на email мейнтейнера.
+  - name: Вопрос по использованию
+    url: https://github.com/oriptal/velosiped/blob/main/README.md
+    about: Сначала посмотри README, может, ответ уже там.
