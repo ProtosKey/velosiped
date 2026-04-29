@@ -74,10 +74,8 @@ typedef struct {
   cJSON *json;
   node_t *staged_new;
   node_t *staged_modified;
-  node_t *staged_not_modified;
   node_t *deleted;
   node_t *modified;
-  node_t *untrackted;
 } status_t;
 
 #endif

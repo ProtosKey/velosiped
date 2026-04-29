@@ -2,6 +2,7 @@
 #include "utils/fs.h"
 #include "utils/hasher.h"
 #include "utils/input_output.h"
+#include "utils/iterator.h"
 #include "utils/logger.h"
 #include "vls_paths.h"
 #include "vls_types.h"
@@ -16,6 +17,27 @@
 #include <unistd.h>
 
 int execute_action(const char *, const stage_ops_t *, stage_ctx_t *);
+
+cJSON *open_json_file(const char *);
+
+int get_all_names(const char *file, node_t **list) {
+  cJSON *json = open_json_file(file);
+  if (!json)
+    return vls_report_errno(ENOENT);
+  if (!cJSON_IsArray(json))
+    return vls_report("Wrong format of file");
+
+  cJSON *elem;
+  cJSON_ArrayForEach(elem, json) {
+    cJSON *path_check = cJSON_GetObjectItemCaseSensitive(elem, path_name);
+    if (cJSON_IsString(path_check) && path_check->valuestring != NULL) {
+      *list = add_next(*list, (void *)strdup(path_check->valuestring));
+    }
+  }
+
+  cJSON_Delete(json);
+  return 0;
+}
 
 cJSON *open_json_file(const char *path) {
   int fd;
@@ -74,16 +96,21 @@ int check_stages(collect_data collect, void *ctx) {
     if (!(cJSON_IsString(hash_item) && hash_item->valuestring != NULL))
       continue;
     if (!(cJSON_IsNumber(status_item) &&
-          (status_item->valueint < UNTRACTED && status_item > UNCHANGED)))
+          (status_item->valueint < UNTRACTED && status_item > UNCHANGED))) {
       return out;
+      cJSON_Delete(json);
+    }
 
     stage_ctx_t context = {};
     context.hash_item = hash_item;
     context.path = path_check->valuestring;
     context.status_item = status_item;
-    if ((out = collect(&context, ctx)) < 0)
+    if ((out = collect(&context, ctx)) < 0) {
+      cJSON_Delete(json);
       return out;
+    }
   }
+  cJSON_Delete(json);
   return 0;
 }
 

@@ -8,6 +8,7 @@ typedef int (*execute_one)(void *, void *);
 node_t *add_next(node_t *, void *);
 int iterate(execute_one, node_t *, void *);
 void list_free(node_t *, bool);
-bool isClear(node_t *);
+bool is_clear_list(node_t *);
+bool check_is_in(node_t *, const char *);
 
 #endif

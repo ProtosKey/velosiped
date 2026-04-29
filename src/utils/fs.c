@@ -140,7 +140,7 @@ int vls_check_path_from_you(char *out, size_t cap, const char *file) {
 
   const char *start = real_file + strlen(place);
   if (strncmp(place, real_file, strlen(place)) != 0)
-    return vls_report("No such file in directory");
+    return vls_report_errno(ENOENT);
   if (start[0] == '/')
     start++;
 

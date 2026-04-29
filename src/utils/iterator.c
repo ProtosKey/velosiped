@@ -48,3 +48,25 @@ int iterate(execute_one execute, node_t *list, void *ctx) {
   }
   return 0;
 }
+
+bool is_clear_list(node_t *list) {
+  if (!list)
+    return true;
+  return false;
+}
+
+bool check_is_in(node_t *list, const char *path) {
+  if (!list)
+    return false;
+
+  node_t *head = list;
+  while (head->prev)
+    head = head->prev;
+
+  while (head) {
+    if (strcmp((char *)head->data, path) == 0)
+      return true;
+    head = head->next;
+  }
+  return false;
+}
