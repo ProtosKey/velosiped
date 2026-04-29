@@ -11,6 +11,12 @@ static void write_stdout(const char *s, size_t n) {
   vls_safety_write((vls_output_t){STDOUT_FILENO, s, n});
 }
 
+static void prepare_error() {
+  write_stderr(CLR_RED, strlen(CLR_RED));
+  write_stderr("\t[Error]\t", 9);
+  write_stderr(CLR_RESET, strlen(CLR_RESET));
+}
+
 int vls_raw(const char *msg) {
   write_stdout(msg, strlen(msg));
   return 0;
@@ -40,20 +46,26 @@ int vls_say_green(const char *msg) {
 }
 
 int vls_report(const char *msg) {
+  prepare_error();
   write_stderr(msg, strlen(msg));
   write_stderr("\n", 1);
   return -1;
 }
 
 int vls_report_at(const char *ctx, const char *msg) {
+  prepare_error();
   write_stderr(ctx, strlen(ctx));
   write_stderr(": ", 2);
   return vls_report(msg);
 }
 
-int vls_report_errno(int err) { return vls_report(strerror(err)); }
+int vls_report_errno(int err) {
+  prepare_error();
+  return vls_report(strerror(err));
+}
 
 int vls_report_errno_at(const char *ctx, int err) {
+  prepare_error();
   write_stderr(ctx, strlen(ctx));
   write_stderr(": ", 2);
   return vls_report(strerror(err));

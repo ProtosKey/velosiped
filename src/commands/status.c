@@ -72,6 +72,10 @@ int vls_status_funct(const int, const char **) {
   iterate(output, status.staged_modified,
           &(output_status_t){CLR_CYAN, "modified:"});
 
+  vls_raw("\n");
+  iterate(output, status.staged_modified,
+          &(output_status_t){CLR_CYAN, "modified:"});
+
   if ((out = walk_dir(check_file, root, (void *)&status)) < 0) {
     return out;
   }
