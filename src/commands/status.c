@@ -16,11 +16,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+typedef struct {
+  node_t *tracked;
+  node_t *untracked;
+} track_t;
+
 int check_file(const char *path, void *ctx) {
-  auto context = (struct {
-    node_t *trackted;
-    node_t *untrackted;
-  } *)ctx;
+  track_t *context = (track_t *)ctx;
 
   int out;
   char root[PATH_MAX];
@@ -30,8 +32,8 @@ int check_file(const char *path, void *ctx) {
   if ((out = vls_path_from_root(rel_path, PATH_MAX, root, path)) < 0)
     return out;
 
-  if (!check_is_in(context->trackted, rel_path)) {
-    context->untrackted = add_next(context->untrackted, strdup(rel_path));
+  if (!check_is_in(context->tracked, rel_path)) {
+    context->untracked = add_next(context->untracked, strdup(rel_path));
   }
   return 0;
 }
@@ -153,9 +155,9 @@ int vls_status_func(const int, const char **) {
     return out;
 
   struct {
-    node_t *trackted;
-    node_t *untrackted;
-  } walk_ctx = {.trackted = tracked, .untrackted = NULL};
+    node_t *tracked;
+    node_t *untracked;
+  } walk_ctx = {.tracked = tracked, .untracked = NULL};
 
   if ((out = walk_dir(check_file, root, (void *)&walk_ctx)) < 0) {
     list_free(tracked, true);
@@ -163,16 +165,16 @@ int vls_status_func(const int, const char **) {
   }
   list_free(tracked, true);
 
-  if (!is_clear_list(walk_ctx.untrackted)) {
+  if (!is_clear_list(walk_ctx.untracked)) {
     is_clear = false;
     if (is_new) {
       vls_raw("\n");
       is_new = false;
     }
     vls_say("Files not in stage:");
-    iterate(output, walk_ctx.untrackted,
-            &(output_status_t){CLR_RED, "untrackted:"});
-    list_free(walk_ctx.untrackted, true);
+    iterate(output, walk_ctx.untracked,
+            &(output_status_t){CLR_RED, "untracked:"});
+    list_free(walk_ctx.untracked, true);
     is_new = true;
   }
 
