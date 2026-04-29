@@ -1,0 +1,84 @@
+name: Bug Report
+description: Сообщить о неработающем поведении в vls
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что нашёл время написать. Чем точнее воспроизведение, тем быстрее починка.
+        Если думаешь, что это **уязвимость** (path traversal, выход за пределы `.vls/`, и т.п.) — **не открывай issue**, пиши на email из [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Кратко
+      description: Одной строкой — что не так.
+      placeholder: "vls add падает на пустом каталоге"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Как воспроизвести
+      description: Точная последовательность команд от `vls init` до момента сбоя. Кодовый блок — желательно.
+      render: shell
+      placeholder: |
+        vls init
+        mkdir empty_dir
+        vls add empty_dir
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что ожидалось
+      placeholder: "Каталог пропускается, добавляются только файлы внутри."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Что произошло
+      description: Включи stdout/stderr и код возврата (`echo $?`).
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Коммит / версия
+      description: Хеш коммита из `git rev-parse HEAD` или тег.
+      placeholder: "a5fa080"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: ОС
+      options:
+        - Linux
+        - macOS
+        - WSL
+        - Other (укажи в комментарии)
+    validations:
+      required: true
+
+  - type: input
+    id: compiler
+    attributes:
+      label: Компилятор и версия
+      placeholder: "gcc 14.2.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Дополнительно
+      description: Логи valgrind/ASan, странности в `.vls/`, другие зацепки. Не обязательно.
