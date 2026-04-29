@@ -31,6 +31,7 @@ add_library(vls_core STATIC
   src/commands/help.c
   src/commands/reset.c
   src/commands/status.c
+  src/commands/log.c
   )
 
 

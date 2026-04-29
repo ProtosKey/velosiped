@@ -8,7 +8,8 @@
   X(commit)                                                                    \
   X(add)                                                                       \
   X(reset)                                                                     \
-  X(status)
+  X(status)                                                                    \
+  X(log)
 
 static inline const char *extract_command_name(int *argc, const char ***argv) {
   *argc -= 1;
