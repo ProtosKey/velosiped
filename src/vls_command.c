@@ -25,3 +25,7 @@ command_t vls_status = {
 command_t vls_log = {
     "log", "Walk back through every commit that brought you to this moment",
     vls_log_func};
+
+command_t vls_drop = {
+    "drop", "Yank a file out of the staging area without disturbing the disk",
+    vls_drop_func};

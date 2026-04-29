@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -169,20 +170,69 @@ cleanup:
   return rc;
 }
 
+static void pack_le64(unsigned char buf[8], uint64_t v) {
+  for (int i = 0; i < 8; i++)
+    buf[i] = (unsigned char)((v >> (i * 8)) & 0xffu);
+}
+
+static int mark_missing_as_deleted(void) {
+  int fd = open(VLS_STAGE, O_RDONLY);
+  if (fd < 0)
+    return vls_report_errno_at(VLS_STAGE, errno);
+
+  cJSON *json = load_stage_json(fd);
+  close(fd);
+  if (!json)
+    return -1;
+
+  bool changed = false;
+  cJSON *item = NULL;
+  cJSON_ArrayForEach(item, json) {
+    cJSON *path = cJSON_GetObjectItemCaseSensitive(item, "path");
+    cJSON *status = cJSON_GetObjectItemCaseSensitive(item, "status");
+    if (!cJSON_IsString(path) || !cJSON_IsNumber(status))
+      continue;
+
+    struct stat st;
+    if (lstat(path->valuestring, &st) < 0 && errno == ENOENT) {
+      file_status_t s = (file_status_t)cJSON_GetNumberValue(status);
+      if (!(s & DELETED)) {
+        cJSON_SetNumberValue(status, DELETED);
+        changed = true;
+      }
+    }
+  }
+
+  int rc = changed ? save_stage_json(json) : 0;
+  cJSON_Delete(json);
+  return rc;
+}
+
 int vls_commit_func(const int argc, const char **argv) {
   if (vls_ensure_dir(VLS_COMMITS_DIR) < 0)
     return -1;
 
-  vls_md_hash_t commit_hash;
-  if (hash_my_path(VLS_STAGE, &commit_hash) < 0)
+  if (mark_missing_as_deleted() < 0)
     return -1;
 
   commit_t parent = {0};
   bool has_parent = (read_head_hash(&parent.hash) == 0);
 
+  struct timespec ts;
+  if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
+    return vls_report_errno(errno);
+
+  unsigned char salt[16];
+  pack_le64(salt, (uint64_t)ts.tv_sec);
+  pack_le64(salt + 8, (uint64_t)ts.tv_nsec);
+
+  vls_md_hash_t commit_hash;
+  if (hash_my_path_and_bytes(VLS_STAGE, salt, sizeof salt, &commit_hash) < 0)
+    return -1;
+
   commit_t self = {
       .prev = has_parent ? &parent : NULL,
-      .created_time = time(NULL),
+      .created_time = ts.tv_sec,
       .hash = commit_hash,
       .msg = (argc > 0 && argv[0]) ? argv[0] : "",
   };

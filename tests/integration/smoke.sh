@@ -94,4 +94,75 @@ CDIR2=".vls/commits/$HEAD2"
 # First commit dir must still exist (commits are append-only).
 [[ -d "$CDIR" ]] || { echo "commit: first commit dir vanished after second commit" >&2; exit 1; }
 
+# --- reset (round-trip) ----------------------------------------------
+# Modify foo.txt and commit a third state, then reset back to the first
+# commit. foo.txt content must come back, HEAD must move back, stage must
+# match the first commit's snapshot.
+echo "modified" > foo.txt
+"$VLS_BIN" add foo.txt >/dev/null
+"$VLS_BIN" commit "modify foo" >/dev/null
+HEAD3="$(cat .vls/head)"
+
+"$VLS_BIN" reset "$HEAD_HASH" >/dev/null
+
+[[ "$(cat .vls/head)" = "$HEAD_HASH" ]] \
+  || { echo "reset: HEAD did not move back to first commit" >&2; exit 1; }
+[[ "$(cat foo.txt)" = "hello" ]] \
+  || { echo "reset: foo.txt was not restored to v1 ('hello'):" >&2; cat foo.txt >&2; exit 1; }
+grep -q '"status":0' .vls/stage.json \
+  || { echo "reset: stage statuses not normalized to UNCHANGED" >&2; cat .vls/stage.json >&2; exit 1; }
+
+# Append-only objects: blobs of all three commits must coexist.
+[[ -f ".vls/objects/$BLOB_HASH" ]] \
+  || { echo "reset: original v1 blob missing — objects/ is not append-only" >&2; exit 1; }
+
+# --- drop (untrack without touching disk) ----------------------------
+# Stage a fresh file, drop it, verify the file stays on disk and stage no
+# longer mentions it.
+echo "scratch" > junk.txt
+"$VLS_BIN" add junk.txt >/dev/null
+grep -q '"path":"junk.txt"' .vls/stage.json \
+  || { echo "drop: precondition failed — junk.txt not in stage" >&2; exit 1; }
+
+"$VLS_BIN" drop junk.txt >/dev/null
+
+[[ -f junk.txt ]] \
+  || { echo "drop: working-tree file was wiped — drop must not touch disk" >&2; exit 1; }
+grep -q '"path":"junk.txt"' .vls/stage.json \
+  && { echo "drop: junk.txt still in stage.json:" >&2; cat .vls/stage.json >&2; exit 1; } || true
+
+# --- regression: post-reset re-add must not collide with old commit ----
+# Scenario: commit a file, delete it, commit, reset to first, reset to
+# second (file lingers on disk but is absent from the index), re-add it,
+# commit. The new commit's stage state happens to match the first commit's
+# byte-for-byte; the commit hash must still differ so the prev-chain stays
+# acyclic and `log` terminates.
+REGRESSION_DIR="$(mktemp -d)"
+(
+  cd "$REGRESSION_DIR"
+  "$VLS_BIN" init >/dev/null
+  echo hello > F
+  "$VLS_BIN" add F >/dev/null
+  "$VLS_BIN" commit first >/dev/null
+  R1="$(cat .vls/head)"
+  rm F
+  "$VLS_BIN" commit second >/dev/null
+  R2="$(cat .vls/head)"
+  "$VLS_BIN" reset "$R1" >/dev/null
+  "$VLS_BIN" reset "$R2" >/dev/null
+  "$VLS_BIN" add F >/dev/null
+  "$VLS_BIN" commit third >/dev/null
+  R3="$(cat .vls/head)"
+
+  [[ "$R3" != "$R1" && "$R3" != "$R2" ]] \
+    || { echo "regression: third commit collided with an ancestor (R1=$R1 R2=$R2 R3=$R3)" >&2; exit 1; }
+
+  LOG_OUT="$(timeout 3 "$VLS_BIN" log)" \
+    || { echo "regression: 'vls log' did not terminate or failed" >&2; exit 1; }
+  N="$(printf '%s\n' "$LOG_OUT" | grep -c '^commit ')"
+  [[ "$N" -eq 3 ]] \
+    || { echo "regression: expected 3 commits in log, got $N" >&2; printf '%s\n' "$LOG_OUT" >&2; exit 1; }
+)
+rm -rf "$REGRESSION_DIR"
+
 echo "smoke: OK"

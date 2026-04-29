@@ -10,7 +10,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int hash_my_path(const char *path, vls_md_hash_t *result) {
+int hash_my_path_and_bytes(const char *path, const void *extra,
+                           size_t extra_len, vls_md_hash_t *result) {
   int fd = open(path, O_RDONLY);
   if (fd < 0)
     return vls_report_errno_at(path, errno);
@@ -46,6 +47,10 @@ int hash_my_path(const char *path, vls_md_hash_t *result) {
       goto hash_error;
   }
 
+  if (extra_len > 0 &&
+      EVP_DigestUpdate(contex, extra, extra_len) != 1)
+    goto hash_error;
+
   unsigned char md_buff[EVP_MAX_MD_SIZE];
   unsigned int len;
   EVP_DigestFinal_ex(contex, md_buff, &len);
@@ -59,6 +64,10 @@ hash_error:
   EVP_MD_CTX_free(contex);
   close(fd);
   return vls_report("Cannot create hash");
+}
+
+int hash_my_path(const char *path, vls_md_hash_t *result) {
+  return hash_my_path_and_bytes(path, NULL, 0, result);
 }
 
 int hash_to_string(const vls_md_hash_t *hash, char *result) {
