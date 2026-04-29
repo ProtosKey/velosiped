@@ -109,14 +109,6 @@ int update_add(cJSON *json, stage_ctx_t *contex) {
       char file_path_new[PATH_MAX];
       if ((out = vls_join_path(file_path_new, PATH_MAX, path, hash_str)) < 0)
         return out;
-      char file_path_old[PATH_MAX];
-      if ((out = vls_join_path(file_path_old, PATH_MAX, path,
-                               contex->hash_item->valuestring)) < 0)
-        return out;
-
-      if (unlink(file_path_old) < 0) {
-        return vls_report_errno(errno);
-      }
       if ((out = vls_copy_file(contex->abs_path, file_path_new,
                                O_CREAT | O_TRUNC | O_WRONLY)) < 0)
         return out;
