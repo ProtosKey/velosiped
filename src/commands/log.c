@@ -57,13 +57,15 @@ static int print_commit(const char *hash_str, char prev_out[HASH_LEN + 1]) {
 
   const time_t created = parse_from_fd(time_fd);
 
-  vls_raw("commit ");
+  vls_raw("Commit:\t");
   vls_say_green(hash_str);
-  vls_raw("Date:   ");
-  vls_raw(ctime(&created));
-  vls_raw("\n    ");
+  vls_raw("Date:\t");
+  vls_say(ctime(&created));
+  vls_raw("Name:\t");
+  vls_raw(CLR_CYAN);
+  vls_raw(CLR_BOLD);
   vls_say(msg);
-  vls_raw("\n");
+  vls_say(CLR_RESET);
 
 cleanup:
 #define CLOSE(file)                                                            \

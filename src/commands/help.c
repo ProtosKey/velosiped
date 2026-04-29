@@ -14,7 +14,9 @@
   X(commit)                                                                    \
   X(add)                                                                       \
   X(reset)                                                                     \
-  X(status)
+  X(status)                                                                    \
+  X(log)                                                                       \
+  X(drop)
 
 #define PRINT_HELP(name)                                                       \
   vls_raw("\n\t");                                                             \

@@ -119,11 +119,11 @@ static int write_text(const char *path, const char *text, size_t n) {
 
 int vls_reset_func(const int argc, const char **argv) {
   if (argc < 1)
-    return vls_report("reset: target commit hash required");
+    return vls_report("Target commit hash required");
 
   const char *target = argv[0];
   if (strlen(target) != HASH_LEN)
-    return vls_report("reset: hash must be 32 hex chars");
+    return vls_report("Hash must be 32 hex chars");
 
   char commit_dir[PATH_MAX];
   if (vls_join_path(commit_dir, sizeof commit_dir, VLS_COMMITS_DIR, target) < 0)
@@ -131,7 +131,7 @@ int vls_reset_func(const int argc, const char **argv) {
 
   struct stat st;
   if (stat(commit_dir, &st) < 0 || !S_ISDIR(st.st_mode))
-    return vls_report_at(target, "no such commit");
+    return vls_report("No such commit");
 
   char commit_json[PATH_MAX];
   if (vls_join_path(commit_json, sizeof commit_json, commit_dir,
