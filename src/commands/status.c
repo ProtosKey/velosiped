@@ -54,7 +54,7 @@ int output(void *data, void *pre) {
   return 0;
 }
 
-int vls_status_funct(const int, const char **) {
+int vls_status_func(const int, const char **) {
   int out;
   char root[PATH_MAX];
   if ((out = vls_find_root(root, PATH_MAX)) < 0) {

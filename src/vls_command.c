@@ -20,4 +20,8 @@ command_t vls_help = {
 
 command_t vls_status = {
     "status", "Show the current state of the staging area and tracked files",
-    vls_status_funct};
+    vls_status_func};
+
+command_t vls_log = {
+    "log", "Walk back through every commit that brought you to this moment",
+    vls_log_func};

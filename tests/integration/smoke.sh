@@ -56,7 +56,7 @@ HEAD_HASH="$(cat .vls/head)"
 # Commit dir + metadata.
 CDIR=".vls/commits/$HEAD_HASH"
 [[ -d "$CDIR" ]] || { echo "commit: $CDIR missing" >&2; exit 1; }
-for f in commit.json hash msg prev next time; do
+for f in commit.json hash msg prev time; do
   [[ -f "$CDIR/$f" ]] || { echo "commit: $CDIR/$f missing" >&2; exit 1; }
 done
 
